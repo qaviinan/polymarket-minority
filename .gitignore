@@ -1,0 +1,44 @@
+# Cursor (IDE: plans, rules, memory, debug — do not commit)
+.cursor/
+
+# Local secrets (keep tracked example)
+.env
+.env.*
+!.env.example
+
+# Large / scratch data (adjust if you version small fixtures)
+data/
+datasets/
+cache/
+scratch/
+tmp/
+*.duckdb
+*.duckdb.wal
+
+# Debug outputs (keep directory via logs/.gitkeep)
+logs/*.jsonl
+logs/**/*.parquet
+logs/**/*.png
+logs/**/*.json
+!logs/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Rendered pipeline (optional: commit for reproducibility)
+goldsky/order_filled_backfill.rendered.yaml
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,16 @@
+# Hand-editable template. Generate a deployable file with:
+#   python -m src.data.render_pipeline_yaml
+# which writes `order_filled_backfill.rendered.yaml` with:
+#   - Polygon block range for Oct–Dec 2024 (from RPC)
+#   - `WHERE asset IN (...)` from `metadata/outcome_tokens.parquet` on R2
+#
+# Deploy:
+#   goldsky turbo apply goldsky/order_filled_backfill.rendered.yaml
+
+name: polymarket-order-filled-r2
+resource_size: s
+
+# Placeholder — the rendered file overwrites this structure.
+sources: {}
+transforms: {}
+sinks: {}
