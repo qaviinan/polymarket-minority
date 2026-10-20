@@ -1,6 +1,15 @@
-# Stage 2 gate memo (recent period)
+# Stage 2: does the skilled minority show up in 2026?
 
-## Verdict (2026-08-10 → 2026-10-04)
+[← All reports](../README.md)
+
+> **Question.** Run the same skill test on 56 days of recent data (Aug 10 – Oct 4, 2026). Is
+> there still a small skilled minority?
+>
+> **Answer.** The test runs cleanly, but 13.7% of eligible wallets come out "skilled" after
+> false-discovery control. That is far above the paper's 2–6%, so the label is not picking out
+> an informed minority, and these wallets are not used for follow-up work.
+
+## Result (2026-08-10 → 2026-10-04)
 
 **Construct checks: PASS** (0 unscorable, 0 `p_skill=0`, minimum Skilled K=6, pre-fee residual −0.15 bps).  
 **Skilled share: still too high to treat as the paper's minority** (16.1% nominal, 13.7% after BH q=0.05, of 75,731 eligible wallets).  
@@ -10,7 +19,10 @@ The 13.5-day failure below was a missing-payout bug, not a fee bug. Gamma pages 
 
 Resolved taker volume in the 56-day window is $2.75B across 63.4M fills. FDR Skilled is 10,410 wallets (1,790 nominal Skilled demoted), with $16.0M combined taker PnL. Sports and weather were not theme-filtered: payouts came from the HuggingFace markets file, which has no Gamma tags. Copy-trading survival was not recomputed on this window.
 
-The sections below are the 13.5-day run (2026-09-21 → 2026-10-04) and are kept as the record of that failure.
+The first attempt used only 13.5 days (2026-09-21 → 2026-10-04) and failed because of the payout bug described above. Its full output is kept below as a record.
+
+<details>
+<summary><b>Superseded: 13.5-day run (2026-09-21 → 2026-10-04)</b></summary>
 
 ## Verdict (13.5-day run, superseded)
 
@@ -18,7 +30,7 @@ The sections below are the 13.5-day run (2026-09-21 → 2026-10-04) and are kept
 **Gate B deliverables: COMPLETE**  
 **Proceed with identity-based Stage 4: NO**
 
-Statistical Gate A was red because exact-enumeration `p_skill` hit 0 (261 Skilled) and 53 Skilled had K<5. That was null payouts, not fees. Excess z=91 and 1,083 FDR flags were not a license to use the label. Accounting Gate A was red on a 1.79 bps pre-fee leak. See [stage2_period_report.md](stage2_period_report.md).
+Statistical Gate A was red because exact-enumeration `p_skill` hit 0 (261 Skilled) and 53 Skilled had K<5. That was null payouts, not fees. Excess z=91 and 1,083 FDR flags were not a license to use the label. Accounting Gate A was red on a 1.79 bps pre-fee leak. See [stage2_period_report.md](06_stage2_vs_2024.md).
 
 ## Coverage and primary universe
 
@@ -98,7 +110,7 @@ Top-five BUY-fill shares range from 55.8% to 100.0%; heavy-favorite fill shares 
 Gate A establishes non-random profitability; it does **not** by itself establish an
 informational mechanism. That distinction is left to OIB/toxicity tests. Strategy,
 category, and cross-wallet evidence for the Skilled cohort is in
-`logs/skilled_profile/` and `docs/v1_pipeline.md` (Skilled-account analysis).
+`logs/skilled_profile/` and [the pipeline reference](../methods/pipeline.md) (Skilled-account analysis).
 
 ## What replicated and what did not
 
@@ -108,3 +120,5 @@ category, and cross-wallet evidence for the Skilled cohort is in
   by the fill cutoff; market-only end dates admitted the Harris 2024 winner market.
 - Any Stage 3 result must use frozen labels and strict temporal provenance. Stage 4 proceeds
   only if the Gate A line above is PASS.
+
+</details>

@@ -1,4 +1,12 @@
-# Validation step 1: is buying favorites a winning strategy?
+# Does buying favorites pay? (Oct–Nov 2024)
+
+[← All reports](../README.md)
+
+> **Question.** Most "skilled" wallets buy contracts priced at 90¢ or more. Is that a real
+> edge a taker could copy?
+>
+> **Answer.** No. Favorites are roughly fairly priced, and a buy-the-favorite rule earns about
+> 0% at every horizon tested. The mispricing is in longshots, and it pays makers, not takers.
 
 **Verdict: no, not as a taker.**
 
@@ -31,7 +39,7 @@ Code: `src/analysis/favorite_calibration.py`. Outputs: `logs/favorite_calibratio
 - 95% CIs come from an **event-cluster bootstrap** (1,000 draws), because markets in the same
   event are correlated.
 
-![calibration](figures/favorite_calibration.png)
+![calibration](../figures/favorite_calibration.png)
 
 ## 1. Calibration of every taker fill
 
@@ -136,7 +144,7 @@ section 1, which section 2 shows is not a repeatable rule.
 
 These are markets whose **outcome was already public but not yet settled**. Time to resolution
 cannot capture that information state, which is why the horizon control doesn't remove it. Per
-the [survivor dossier](calibrated_skilled_report.md), 87% of 0xfffe's passive fills there were
+the [survivor dossier](02_who_are_the_skilled.md), 87% of 0xfffe's passive fills there were
 filled by takers buying the losing side for under 1¢.
 
 ## 4. Implications for strategy v1 (Sleeve D)

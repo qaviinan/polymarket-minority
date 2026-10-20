@@ -1,4 +1,26 @@
-# Stage 1 rigor memo
+# Stage 1: is there a skilled minority? (Oct–Nov 2024)
+
+[← All reports](../README.md)
+
+> **Question.** Do some Polymarket takers win more consistently than luck allows, as
+> Gómez-Cram et al. claim?
+>
+> **Result.** 914 of 11,465 eligible wallets (7.97%) pass the
+> event-level sign-randomization test at p<0.05, against 539.4 expected by chance
+> (z=16.53). 484 (4.22%) survive Benjamini–Hochberg
+> at q=0.05.
+>
+> **What it means.** The profits are not random, but that alone does not show the winners are
+> *informed*. Later reports show most of this group is buying heavy favorites
+> ([report 3](03_favorite_buying.md)) and only 8 survive a price-aware null
+> ([report 2](02_who_are_the_skilled.md)).
+
+**Data:** taker fills from Oct 5 to Nov 4, 2024, restricted to markets that resolved before the
+last fill. **Code:** `python -m src.analysis.stage1_gate`.
+
+**Glossary.** *Gate A* = the statistical and accounting checks that must pass before skill
+labels are used downstream. *Gate B* = the audit outputs that must exist. *Stage 4* = follow-up
+work that tracks specific wallets. *K* = number of distinct events a wallet traded.
 
 ## Verdict
 
@@ -84,7 +106,7 @@ Top-five BUY-fill shares range from 58.7% to 100.0%; heavy-favorite fill shares 
 Gate A establishes non-random profitability; it does **not** by itself establish an
 informational mechanism. That distinction is left to OIB/toxicity tests. Strategy,
 category, and cross-wallet evidence for the Skilled cohort is in
-`logs/skilled_profile/` and `docs/v1_pipeline.md` (Skilled-account analysis).
+`logs/skilled_profile/` and [the pipeline reference](../methods/pipeline.md) (Skilled-account analysis).
 
 ## What replicated and what did not
 

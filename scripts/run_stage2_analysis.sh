@@ -1,8 +1,8 @@
 #!/bin/zsh
 # Stage 2 analysis on already-verified R2 slices. Does not call Goldsky/turbo.
 set -euo pipefail
-cd /Users/qtpie/repos/polymarket
-export PYTHONPATH="/Users/qtpie/repos/polymarket${PYTHONPATH:+:$PYTHONPATH}"
+cd "$(dirname "$0")/.."
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONUNBUFFERED=1
 export MPLBACKEND=Agg
 export PERIOD_ID=recent_2026

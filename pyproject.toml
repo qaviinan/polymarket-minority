@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "polymarket-replication"
 version = "0.1.0"
-description = "Stage-1 replication: informed minority (R2 + DuckDB)"
+description = "Testing the informed-minority claim on Polymarket trade data (R2 + DuckDB)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import duckdb
 
-from src.lib.duck import get_duck, r2_uri
+from src.lib.duck import r2_uri
 from src.lib.period import period_id
 
 

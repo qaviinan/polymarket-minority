@@ -1,8 +1,17 @@
-# Concentrated winners: few bets, one category, big payoffs
+# Few bets, big wins: concentrated winners (Oct–Nov 2024)
 
-Separate from the main pipeline report (`docs/v1_pipeline.md`). This report examines
-accounts that the Stage 1 skill test cannot see: wallets that made only a few bets, all in
-one category, and won (or lost) a lot.
+[← All reports](../README.md)
+
+> **Question.** The skill test needs at least 5 events per wallet. What about wallets that
+> placed one to three large bets in a single category and won?
+>
+> **Answer.** Mostly election bettors on one coin flip, mirrored by an even larger group of
+> losers. Outside the election, a small subset did trade ahead of the price (+0.9¢ per share
+> at 24h), led by the Ballon d'Or and the Israel strike on Iran. No individual wallet can be
+> certified with so few bets.
+
+This report examines accounts that the Stage 1 skill test cannot see: wallets that made only a
+few bets, all in one category, and won (or lost) a lot.
 
 Data: Polymarket order fills from 2024-10-05 to 2024-11-04 (255,566 accounts, $2.4B). Unlike
 Stage 1, this report uses **every** market, including those that resolved after the data
@@ -104,7 +113,7 @@ losing side (Harris, popular vote).
 
 ## 4. Evidence that does not depend on who won
 
-![Calibration and markouts](figures/concentrated_calibration_markouts.png)
+![Calibration and markouts](../figures/concentrated_calibration_markouts.png)
 
 ### 4.1 Calibration: do cheap bets win more often than their price?
 

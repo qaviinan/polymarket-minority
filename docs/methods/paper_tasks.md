@@ -1,5 +1,7 @@
 # Reference Document: Replicating "Prediction Market Accuracy: Crowd Wisdom or Informed Minority?"
 
+[← Docs index](../README.md)
+
 ## 1. Context and Reference
 
 **Paper:** Gómez-Cram, R., Guo, Y., Jensen, T. I., & Kung, H. (2026). *Prediction Market Accuracy: Crowd Wisdom or Informed Minority?*

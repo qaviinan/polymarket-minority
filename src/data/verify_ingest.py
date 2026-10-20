@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
-import pandas as pd
 
 from src.lib.debug import debug_step
 from src.lib.duck import get_duck, r2_uri

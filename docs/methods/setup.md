@@ -1,4 +1,6 @@
-# Stage 1 setup: R2, Goldsky, DuckDB, Python
+# Setup and runbook: R2, DuckDB, Python
+
+[← Docs index](../README.md)
 
 > **Goldsky is retired (2026-10-07).** The Goldsky YAML, `render_pipeline_yaml`,
 > `sync_goldsky_r2_secret`, `wait_for_backfill`, the turbo half of `stage2_ingest`, the CLI and
@@ -6,7 +8,7 @@
 > existing R2 `order_filled/` data was produced and cannot be run. Polygon RPC helpers now live in
 > `src/lib/polygon.py`; Stage 2 metadata helpers in `src/data/stage2_metadata.py`.
 
-This document is the single source of truth for **prerequisites**, **one-time provisioning**, and **day-to-day orchestration** of the informed-minority replication pipeline (Oct–Dec 2024 sample).
+This document is the single source of truth for **prerequisites**, **one-time provisioning**, and **day-to-day orchestration** of the informed-minority replication pipeline (Oct–Nov 2024 sample).
 
 ## 1. Prerequisites
 
@@ -15,10 +17,10 @@ This document is the single source of truth for **prerequisites**, **one-time pr
 | **Cloudflare account** (free) | R2 object storage (10 GB free, no egress fees). |
 | **Goldsky account** + CLI | Turbo Pipelines to backfill `polymarket.order_filled` v2 into R2. |
 | **Python 3.11+** | Analysis (`duckdb`, `pandas`, `linearmodels`, …). |
-| **uv** (recommended) or **pip** | Install [`pyproject.toml`](../pyproject.toml). |
+| **uv** (recommended) or **pip** | Install [`pyproject.toml`](../../pyproject.toml). |
 | **Polygon JSON-RPC URL** (often needs a provider; see Step C) | Map calendar dates → `block_number` range for Goldsky fast-scan. |
 
-Optional: **Jupyter** for [`notebooks/stage1.ipynb`](../notebooks/stage1.ipynb).
+Optional: **Jupyter** for [`notebooks/stage1.ipynb`](../../notebooks/stage1.ipynb).
 
 ## 2. Cloudflare R2 setup
 
@@ -31,7 +33,7 @@ Optional: **Jupyter** for [`notebooks/stage1.ipynb`](../notebooks/stage1.ipynb).
 5. If you only ever see **Account ID** and one long **API token** string, you are usually in the **wrong** flow (e.g. global Cloudflare API tokens, or Workers/R2 bindings). Go back to **R2 → Account details → Manage (API Tokens)** and complete **Create … API token** until both Access Key ID and Secret Access Key appear. If you already dismissed that screen, **revoke** the token and create a new one — you cannot retrieve the secret again.
 6. **Account ID** (32 hex) is on the same R2 overview / account area; it is not a secret. S3 endpoint for tools in this repo: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
 
-Put them in `.env` (copy from [`.env.example`](../.env.example)):
+Put them in `.env` (copy from [`.env.example`](../../.env.example)):
 
 ```bash
 R2_ACCOUNT_ID=...
@@ -168,7 +170,7 @@ Resolves Polygon **block numbers** for Oct 1 and Dec 31 2024 via `POLYGON_RPC_UR
 python -m src.data.render_pipeline_yaml
 ```
 
-`render_pipeline_yaml` tries **`POLYGON_RPC_URL` first**, then optional **`POLYGON_RPC_FALLBACK_URLS`** (comma-separated), then built-in public endpoints. **`https://polygon-rpc.com` often returns `401`** without a provider key — prefer **`POLYGON_RPC_URL=https://polygon-bor.publicnode.com`** or your own Alchemy/Infura URL (see [.env.example](../.env.example)). To **only** use your URL (no fallbacks): `POLYGON_RPC_STRICT=true`.
+`render_pipeline_yaml` tries **`POLYGON_RPC_URL` first**, then optional **`POLYGON_RPC_FALLBACK_URLS`** (comma-separated), then built-in public endpoints. **`https://polygon-rpc.com` often returns `401`** without a provider key — prefer **`POLYGON_RPC_URL=https://polygon-bor.publicnode.com`** or your own Alchemy/Infura URL (see [.env.example](../../.env.example)). To **only** use your URL (no fallbacks): `POLYGON_RPC_STRICT=true`.
 
 If binary search fails, widen bounds:
 
@@ -260,7 +262,7 @@ Nominal cutoff-valid labels are written to
 must use the FDR-controlled
 `labels/account_classification_stage1_fdr_q05.parquet`. The final machine-readable
 verdict is `logs/stage1_gate/stage1_verdict.json`, and the human summary is
-[`docs/stage1_rigor_memo.md`](stage1_rigor_memo.md). Never use the unrestricted headline
+[`docs/reports/01_stage1_skill_test.md`](../reports/01_stage1_skill_test.md). Never use the unrestricted headline
 downstream when `coverage_audit` reports material post-cutoff volume.
 
 ### Step K — OIB + pricing-error regression
@@ -280,7 +282,7 @@ python -m src.analysis.event_split_persistence
 python -m src.analysis.event_split_robustness  # seeds from EVENT_OOS_SEEDS
 ```
 
-Env: **`EVENT_OOS_TRAIN_FRAC`**, **`EVENT_OOS_SEED`**, **`EVENT_OOS_SEEDS`** (see [.env.example](../.env.example)); reuses **`SIGN_RANDOMIZATION_ITERATIONS`** / **`SIGN_RANDOMIZATION_SEED`**.
+Env: **`EVENT_OOS_TRAIN_FRAC`**, **`EVENT_OOS_SEED`**, **`EVENT_OOS_SEEDS`** (see [.env.example](../../.env.example)); reuses **`SIGN_RANDOMIZATION_ITERATIONS`** / **`SIGN_RANDOMIZATION_SEED`**.
 
 ### Step K3 — Favorite-buying attribution
 
@@ -394,23 +396,23 @@ If groups are sparse, drop redundant OIB columns or merge rare groups — regres
 
 | Path | Role |
 |------|------|
-| [`src/data/load_markets.py`](../src/data/load_markets.py) | Gamma → R2 metadata |
-| [`src/data/sync_goldsky_r2_secret.py`](../src/data/sync_goldsky_r2_secret.py) | Push R2 keys from `.env` → Goldsky secret |
-| [`src/data/render_pipeline_yaml.py`](../src/data/render_pipeline_yaml.py) | Render Turbo YAML |
-| [`src/data/wait_for_backfill.py`](../src/data/wait_for_backfill.py) | Poll R2 row counts |
-| [`src/data/verify_ingest.py`](../src/data/verify_ingest.py) | Ingest QA |
-| [`src/analysis/partition.py`](../src/analysis/partition.py) | Maker/taker views |
-| [`src/analysis/pnl.py`](../src/analysis/pnl.py) | Realized PnL |
-| [`src/analysis/sign_randomization.py`](../src/analysis/sign_randomization.py) | Event-level null |
-| [`src/analysis/classification.py`](../src/analysis/classification.py) | Labels |
-| [`src/analysis/coverage_audit.py`](../src/analysis/coverage_audit.py) | Cutoff sensitivity + primary labels |
-| [`src/analysis/multiple_testing.py`](../src/analysis/multiple_testing.py) | Eligible cohort + BH FDR |
-| [`src/analysis/population_audit.py`](../src/analysis/population_audit.py) | Identity/population diagnostics |
-| [`src/analysis/market_closure.py`](../src/analysis/market_closure.py) | Maker/taker/fee closure |
-| [`src/analysis/composition_audit.py`](../src/analysis/composition_audit.py) | Category/event concentration |
-| [`src/analysis/trader_sanity.py`](../src/analysis/trader_sanity.py) | Top-winner and Skilled histories |
-| [`src/analysis/stage1_gate.py`](../src/analysis/stage1_gate.py) | Gate A/B verdict + memo |
-| [`src/analysis/oib_regression.py`](../src/analysis/oib_regression.py) | OIB + Δ error |
-| [`src/analysis/event_split_persistence.py`](../src/analysis/event_split_persistence.py) | Event OOS persistence (paper §5) |
-| [`goldsky/order_filled_backfill.yaml`](../goldsky/order_filled_backfill.yaml) | Human stub |
+| [`src/data/load_markets.py`](../../src/data/load_markets.py) | Gamma → R2 metadata |
+| `src/data/sync_goldsky_r2_secret.py` (removed) | Push R2 keys from `.env` → Goldsky secret |
+| `src/data/render_pipeline_yaml.py` (removed) | Render Turbo YAML |
+| `src/data/wait_for_backfill.py` (removed) | Poll R2 row counts |
+| [`src/data/verify_ingest.py`](../../src/data/verify_ingest.py) | Ingest QA |
+| [`src/analysis/partition.py`](../../src/analysis/partition.py) | Maker/taker views |
+| [`src/analysis/pnl.py`](../../src/analysis/pnl.py) | Realized PnL |
+| [`src/analysis/sign_randomization.py`](../../src/analysis/sign_randomization.py) | Event-level null |
+| [`src/analysis/classification.py`](../../src/analysis/classification.py) | Labels |
+| [`src/analysis/coverage_audit.py`](../../src/analysis/coverage_audit.py) | Cutoff sensitivity + primary labels |
+| [`src/analysis/multiple_testing.py`](../../src/analysis/multiple_testing.py) | Eligible cohort + BH FDR |
+| [`src/analysis/population_audit.py`](../../src/analysis/population_audit.py) | Identity/population diagnostics |
+| [`src/analysis/market_closure.py`](../../src/analysis/market_closure.py) | Maker/taker/fee closure |
+| [`src/analysis/composition_audit.py`](../../src/analysis/composition_audit.py) | Category/event concentration |
+| [`src/analysis/trader_sanity.py`](../../src/analysis/trader_sanity.py) | Top-winner and Skilled histories |
+| [`src/analysis/stage1_gate.py`](../../src/analysis/stage1_gate.py) | Gate A/B verdict + memo |
+| [`src/analysis/oib_regression.py`](../../src/analysis/oib_regression.py) | OIB + Δ error |
+| [`src/analysis/event_split_persistence.py`](../../src/analysis/event_split_persistence.py) | Event OOS persistence (paper §5) |
+| `goldsky/order_filled_backfill.yaml` (removed) | Human stub |
 | `goldsky/order_filled_backfill.rendered.yaml` | **Generated** — do not hand-edit |

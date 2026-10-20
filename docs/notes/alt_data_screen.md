@@ -1,5 +1,10 @@
 # Alternative-data screen of live Polymarket events
 
+[← Docs index](../README.md)
+
+> **Working note.** A screen of live markets for alternative-data edges; feeds into
+> [strategy v1](strategy_v1.md).
+
 **Snapshot:** 2026-10-05, 4,158 active events (Gamma API, top ~2,100 each by 24h volume,
 lifetime volume, and liquidity). Reproduce with `python scripts/alt_data_screen.py [--refresh]`.
 Outputs are in `logs/alt_data_screen/`:

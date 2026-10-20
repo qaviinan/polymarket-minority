@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -81,7 +80,6 @@ def main() -> None:
             FROM joined
             """
         ).df()
-        row = coverage.iloc[0]
         coverage["market_share_after_cutoff"] = (
             coverage["markets_after_cutoff"] / coverage["markets"]
         )

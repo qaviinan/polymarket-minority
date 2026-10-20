@@ -1,8 +1,10 @@
-# v1 pipeline — full data and analysis view
+# Pipeline reference: data, every step, and why
 
-End-to-end reference for the **Stage 1 informed-minority replication** (Oct–Dec 2024 sample). This document walks from **raw sources** through **every operation** to **OIB regression**, with schemas, observed shapes from a local run, and the **why** behind each step.
+[← Docs index](../README.md)
 
-**Related docs:** [SETUP.md](SETUP.md) (runbook), [PROJECT_MEMORY.md](PROJECT_MEMORY.md) (status), [replication_reference_minority_paper.md](../replication_reference_minority_paper.md) (paper tasks).
+End-to-end reference for the **Stage 1 informed-minority replication** (Oct–Nov 2024 sample). This document walks from **raw sources** through **every operation** to **OIB regression**, with schemas, observed shapes from a local run, and the **why** behind each step.
+
+**Related docs:** [setup.md](setup.md) (runbook), [paper_tasks.md](paper_tasks.md) (paper tasks).
 
 > **Primary Stage 1 result (corrected 2026-10-04, v2):** Primary inference uses only
 > markets whose market **and parent-event** end dates are on or before the fill cutoff
@@ -13,7 +15,7 @@ End-to-end reference for the **Stage 1 informed-minority replication** (Oct–De
 > attached to markets resolving after the cutoff. The primary cohort has 11,465 eligible
 > traders, 914 nominal Skilled winners (7.97%, versus 539 expected under the discrete null,
 > z=16.5), and **484 BH q=0.05 survivors**. Gate A and Gate B pass
-> ([stage1_rigor_memo.md](stage1_rigor_memo.md)).
+> ([Stage 1 skill test](../reports/01_stage1_skill_test.md)).
 >
 > **Main caveat (Section 5.8):** the event sign-flip null treats every position as a
 > 50/50 bet. The FDR Skilled cohort puts 88% of its volume into buys priced ≥90¢. Under a
@@ -26,6 +28,37 @@ End-to-end reference for the **Stage 1 informed-minority replication** (Oct–De
 > is 91% BUY.
 
 ---
+
+## Contents
+
+- [0. High-level flow](#0-high-level-flow)
+- [1. Data we load](#1-data-we-load)
+  - [1.1 Gamma metadata (API → R2)](#11-gamma-metadata-api--r2)
+  - [1.2 On-chain order fills (Goldsky → R2)](#12-on-chain-order-fills-goldsky--r2)
+  - [1.3 Infrastructure helpers (not analysis tables)](#13-infrastructure-helpers-not-analysis-tables)
+- [2. Analysis pipeline (post-R2)](#2-analysis-pipeline-post-r2)
+  - [Step G — Partition (maker / taker views)](#step-g--partition-maker--taker-views)
+  - [Step H — Realized PnL](#step-h--realized-pnl)
+  - [Step I — Event-level sign randomization](#step-i--event-level-sign-randomization)
+  - [Step J — Classification](#step-j--classification)
+  - [Step K — OIB and pricing-error regression](#step-k--oib-and-pricing-error-regression)
+- [3. Optional branch — Event-split OOS persistence (paper Task 5)](#3-optional-branch--event-split-oos-persistence-paper-task-5)
+- [4. Favorite-buying attribution](#4-favorite-buying-attribution)
+- [5. Skilled-account analysis](#5-skilled-account-analysis)
+  - [5.1 Volume and PnL](#51-volume-and-pnl)
+  - [5.2 Direction of trades](#52-direction-of-trades)
+  - [5.3 Price buckets](#53-price-buckets)
+  - [5.4 Market categories](#54-market-categories)
+  - [5.5 Spread across categories and events](#55-spread-across-categories-and-events)
+  - [5.6 Correlation between Skilled accounts on the same markets and events](#56-correlation-between-skilled-accounts-on-the-same-markets-and-events)
+  - [5.7 Top 10 Skilled accounts versus the rest](#57-top-10-skilled-accounts-versus-the-rest)
+  - [5.8 Price-calibrated null (construct check)](#58-price-calibrated-null-construct-check)
+  - [5.9 Where the Skilled money comes from (playbook decomposition)](#59-where-the-skilled-money-comes-from-playbook-decomposition)
+  - [5.10 Do Skilled crypto bets predict coin prices? (copy-trade backtest)](#510-do-skilled-crypto-bets-predict-coin-prices-copy-trade-backtest)
+- [6. Paper task mapping](#6-paper-task-mapping)
+- [7. End-to-end command sequence](#7-end-to-end-command-sequence)
+- [8. Debug and reproducibility](#8-debug-and-reproducibility)
+- [9. Known limitations (v1)](#9-known-limitations-v1)
 
 ## 0. High-level flow
 
@@ -76,7 +109,7 @@ Local **debug** artifacts (not on R2): `logs/<step>_*.jsonl`, `logs/<step>/*.par
 ### 1.1 Gamma metadata (API → R2)
 
 **Script:** `python -m src.data.load_markets`  
-**Source:** [`src/data/load_markets.py`](../src/data/load_markets.py)  
+**Source:** [`src/data/load_markets.py`](../../src/data/load_markets.py)  
 **API:** `GET {POLYMARKET_GAMMA_BASE_URL}/events` with `closed=true`, `end_date_min=2024-10-01`, `end_date_max=2024-12-31`.
 
 **Why:** The paper needs **resolved** markets, **event_id** for correlated sign-randomization, **outcome token IDs** for Goldsky `asset IN (...)`, and **resolved_payout** for realized PnL. Gamma is the curated catalog; on-chain data alone does not provide event groupings or resolution labels in one place.
@@ -154,7 +187,7 @@ Local **debug** artifacts (not on R2): `logs/<step>_*.jsonl`, `logs/<step>/*.par
 
 **Scripts:**
 
-1. `python -m src.data.render_pipeline_yaml` — [`src/data/render_pipeline_yaml.py`](../src/data/render_pipeline_yaml.py)
+1. `python -m src.data.render_pipeline_yaml` — `src/data/render_pipeline_yaml.py` (removed)
 2. `goldsky turbo apply goldsky/order_filled_backfill.rendered.yaml`
 3. Optional: `python -m src.data.wait_for_backfill`, `python -m src.data.verify_ingest`
 
@@ -211,7 +244,7 @@ r2://$R2_BUCKET/order_filled/dt=2024-10-15/batch_*.parquet
 
 **Note:** Full Goldsky backfill to Dec 31 may be incomplete if Starter plan paused mid-run; analysis uses whatever is on R2, optionally clipped by `ANALYSIS_*` env vars.
 
-**Verify ingest** (`python -m src.data.verify_ingest`, [`src/data/verify_ingest.py`](../src/data/verify_ingest.py)): row totals, daily counts, maker/taker split, Gamma vs on-chain volume ratio per market, orphan assets not in metadata.
+**Verify ingest** (`python -m src.data.verify_ingest`, [`src/data/verify_ingest.py`](../../src/data/verify_ingest.py)): row totals, daily counts, maker/taker split, Gamma vs on-chain volume ratio per market, orphan assets not in metadata.
 
 ---
 
@@ -227,9 +260,9 @@ r2://$R2_BUCKET/order_filled/dt=2024-10-15/batch_*.parquet
 
 ## 2. Analysis pipeline (post-R2)
 
-All analysis modules use **DuckDB** ([`src/lib/duck.py`](../src/lib/duck.py)): in-memory DB, `httpfs` + R2 secret, reads `r2://` Parquet. Env loaded from repo-root `.env`.
+All analysis modules use **DuckDB** ([`src/lib/duck.py`](../../src/lib/duck.py)): in-memory DB, `httpfs` + R2 secret, reads `r2://` Parquet. Env loaded from repo-root `.env`.
 
-**Optional analysis window** ([`src/analysis/partition.py`](../src/analysis/partition.py)):
+**Optional analysis window** ([`src/analysis/partition.py`](../../src/analysis/partition.py)):
 
 - `ANALYSIS_BLOCK_TS_MIN` / `MAX` — inclusive Unix seconds on `block_timestamp`
 - `ANALYSIS_USE_LAST_N_DAYS` — last N days from max timestamp in Parquet
@@ -289,7 +322,7 @@ Any fill beyond 3 weeks is clamped to `week_index = 3`; there is no `week_index 
 ### Step H — Realized PnL
 
 **Script:** `python -m src.analysis.pnl`  
-**Source:** [`src/analysis/pnl.py`](../src/analysis/pnl.py)  
+**Source:** [`src/analysis/pnl.py`](../../src/analysis/pnl.py)  
 **Why (paper Task 3.1):** Realized PnL vs resolution is the object for sign-randomization.
 
 **Input view:** `takers` or `takers_train` (if minority split on).
@@ -393,7 +426,7 @@ Markets and events are counted via a join through `outcome_tokens → markets`. 
 ### Step I — Event-level sign randomization
 
 **Script:** `python -m src.analysis.sign_randomization`  
-**Source:** [`src/analysis/sign_randomization.py`](../src/analysis/sign_randomization.py)  
+**Source:** [`src/analysis/sign_randomization.py`](../../src/analysis/sign_randomization.py)  
 **Why (paper Tasks 3.2–3.3):** Under null of no predictability, randomly flip **trade direction** (BUY↔SELL) at the **event** level — all fills by an account within an event flip together — while holding contract size, price, and fees fixed; recompute PnL per draw and compare to realized account PnL → p-values.
 
 **Core:** `run_sign_randomization_core(ev_df, acct, rng, n_iter)`.
@@ -462,7 +495,7 @@ This collapses token-level PnL and fees up to event level. Fees do not flip when
 ### Step J — Classification
 
 **Script:** `python -m src.analysis.classification`  
-**Source:** [`src/analysis/classification.py`](../src/analysis/classification.py)  
+**Source:** [`src/analysis/classification.py`](../../src/analysis/classification.py)  
 **Why (paper Task 4):** Map p-values + PnL sign to **Skilled_Winner**, **Lucky_Winner**, **Unlucky_Loser**, **Unskilled_Loser**, **Excluded**.
 
 **Rules** (`assign_group`):
@@ -534,7 +567,7 @@ check, against roughly 14 expected by chance among 5,003 tested accounts.
 ### Step K — OIB and pricing-error regression
 
 **Script:** `python -m src.analysis.oib_regression`  
-**Source:** [`src/analysis/oib_regression.py`](../src/analysis/oib_regression.py)  
+**Source:** [`src/analysis/oib_regression.py`](../../src/analysis/oib_regression.py)  
 **Why (paper Task 6):** Run two distinct price-discovery tests: whether directional **order imbalance (OIB)** predicts subsequent signed prices/outcomes, and whether the **volume share** of Skilled traders predicts reductions in lifecycle pricing error.
 
 **Inputs:**
@@ -731,7 +764,7 @@ Power and horizon are also limited. The paper uses 2023–2025; this run has 30 
 ## 3. Optional branch — Event-split OOS persistence (paper Task 5)
 
 **Script:** `python -m src.analysis.event_split_persistence`  
-**Source:** [`src/analysis/event_split_persistence.py`](../src/analysis/event_split_persistence.py)
+**Source:** [`src/analysis/event_split_persistence.py`](../../src/analysis/event_split_persistence.py)
 
 **Why:** Paper validates that **Skilled_Winner** labels **persist** on a **random holdout of events** (not calendar time). Separate from week-based OIB validation.
 
@@ -802,7 +835,7 @@ In that superseded run the Skilled result was also not seed-specific: every spli
 ## 4. Favorite-buying attribution
 
 **Script:** `python -m src.analysis.favorite_buying`  
-**Source:** [`src/analysis/favorite_buying.py`](../src/analysis/favorite_buying.py)
+**Source:** [`src/analysis/favorite_buying.py`](../../src/analysis/favorite_buying.py)
 
 Each fill's settled contribution is computed additively as signed shares × payout − signed USDC − fee. BUY fills are split by their contemporaneous token price: favorite (`price ≥ threshold`) or underdog. Thresholds 0.50, 0.75, and 0.90 distinguish broad favorites from heavy favorites. `PNL_MARKET_UNIVERSE=resolved_by_fill_cutoff` restricts fills to markets whose market and event both end by the last fill. Without it, unresolved markets would be settled at a zero payout.
 
@@ -840,7 +873,7 @@ Artifacts: `logs/favorite_buying/summary_week-{train,test}.parquet` plus group-s
 
 **Script:** `python -m src.analysis.skilled_profile` (nominal variant:
 `SKILLED_PROFILE_LABEL_COL=trader_group SKILLED_PROFILE_OUT_DIR=logs/skilled_profile_nominal`)  
-**Source:** [`src/analysis/skilled_profile.py`](../src/analysis/skilled_profile.py)  
+**Source:** [`src/analysis/skilled_profile.py`](../../src/analysis/skilled_profile.py)  
 **Labels:** Stage 1 primary all-window labels with BH q=0.05 demotion
 (`logs/multiple_testing/account_classification_primary_fdr.parquet`, column
 `trader_group_fdr_q05`): 484 Skilled, 4,334 Lucky, 8,523 Unlucky, 1,928 Unskilled.  
@@ -906,7 +939,7 @@ miss half of their activity.
 
 ### 5.3 Price buckets
 
-![BUY price buckets by cohort](figures/buy_price_buckets_by_cohort.png)
+![BUY price buckets by cohort](../figures/buy_price_buckets_by_cohort.png)
 
 | BUY fills priced ≥90¢ | Skilled top 10 | Skilled rest | Lucky | Unlucky | Unskilled |
 |---|---:|---:|---:|---:|---:|
@@ -923,7 +956,7 @@ shares for the loser cohorts are shares of a negative total.
 
 ### 5.4 Market categories
 
-![Theme mix by cohort](figures/theme_mix_by_cohort.png)
+![Theme mix by cohort](../figures/theme_mix_by_cohort.png)
 
 | Theme (share of taker volume) | Skilled top 10 | Skilled rest | Lucky | Unlucky | Unskilled |
 |---|---:|---:|---:|---:|---:|
@@ -1257,13 +1290,13 @@ python scripts/oib_table.py logs/oib_regression   # print all OIB coefficients
 
 `SKILLED_PROFILE_REFRESH=1` rebuilds the local fill cache (`logs/skilled_profile/fills_cache.parquet`); set it whenever labels or the universe change.
 
-**Notebook:** [`notebooks/stage1.ipynb`](../notebooks/stage1.ipynb) — Pre-R2 vs Post-R2 cells + plots.
+**Notebook:** [`notebooks/stage1.ipynb`](../../notebooks/stage1.ipynb) — Pre-R2 vs Post-R2 cells + plots.
 
 ---
 
 ## 8. Debug and reproducibility
 
-Every module wraps work in `debug_step(...)` ([`src/lib/debug.py`](../src/lib/debug.py)):
+Every module wraps work in `debug_step(...)` ([`src/lib/debug.py`](../../src/lib/debug.py)):
 
 - **JSONL:** `logs/<step>_<timestamp>.jsonl` — metrics + green/yellow/red assertions
 - **Parquet/JSON:** `logs/<step>/` — sample tables, histograms, regression coefficients

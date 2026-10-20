@@ -10,7 +10,6 @@ import json
 import os
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from src.analysis.event_grouping import register_event_views
@@ -250,7 +249,7 @@ Either a clean negative (the 2024 label does not carry; almost nobody is still a
 or a thin positive (a handful of wallets remain Skilled) is evidence. A 13.5-day
 non-election window is not a replication of Oct–Nov 2024; it is a different market.
 """
-        out = Path("docs/stage2_period_report.md")
+        out = Path("docs/reports/06_stage2_vs_2024.md")
         out.write_text(report, encoding="utf-8")
         dbg.log("export", "report", str(out))
         (logs_path("stage2_compare") / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

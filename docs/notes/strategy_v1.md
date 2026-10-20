@@ -1,8 +1,12 @@
 # Strategy v1: data-informed, reward-subsidised market making
 
+[← Docs index](../README.md)
+
+> **Working note.** A strategy design built on the findings, not a tested result.
+
 **Status:** design, 2026-10-05. Nothing is backtested yet; Section 5 is the validation plan.
-**Inputs:** Stage 1 results ([v1_pipeline.md](v1_pipeline.md) §4, §5.8, §5.9), the alt-data
-screen ([alt_data_market_screen.md](alt_data_market_screen.md)), and live Gamma/CLOB snapshots
+**Inputs:** Stage 1 results ([v1_pipeline.md](../methods/pipeline.md) §4, §5.8, §5.9), the alt-data
+screen ([alt_data_market_screen.md](alt_data_screen.md)), and live Gamma/CLOB snapshots
 (`logs/alt_data_screen/raw_events.json`, `logs/alt_data_screen/reward_markets.csv`).
 
 ## 1. What the evidence supports (premises, checked)
@@ -110,7 +114,7 @@ base rates as fair value (alt-data screen, `speech_mentions`).
 
 ### D. Favorite carry (research gate, not deployed)
 
-**Result (2026-10-05, [favorite_calibration_report.md](favorite_calibration_report.md)): the gate
+**Result (2026-10-05, [favorite_calibration_report.md](../reports/03_favorite_buying.md)): the gate
 fails for taker carry.** The only surviving variant is maker bids at 98–99.5¢ in
 decided-but-unsettled markets.
 

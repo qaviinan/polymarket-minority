@@ -1,4 +1,13 @@
-# Who are the calibrated-null "skilled" traders? (Oct 6 – Nov 5, 2024 window)
+# Who are the skilled traders, really? (Oct–Nov 2024)
+
+[← All reports](../README.md)
+
+> **Question.** The basic skill test treats a +5¢ win and a −5¢ loss as equally likely. Which
+> wallets still beat a null that accounts for the price they paid, and how did they make money?
+>
+> **Answer.** 39 wallets survive; three of them earn 96% of the money. They buy after public
+> news, trade live events faster than the market, or buy pregame NFL favorites. None looks like
+> an insider.
 
 **Bottom line.** 39 wallets beat the price-calibrated null at BH q<0.05. 8 of them are also
 FDR-Skilled in Stage 1. Their PnL comes from three businesses: buying after the news, trading
