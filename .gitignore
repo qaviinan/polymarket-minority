@@ -7,19 +7,23 @@
 !.env.example
 
 # Large / scratch data (adjust if you version small fixtures)
-data/
-datasets/
-cache/
-scratch/
-tmp/
+/data/
+/datasets/
+/cache/
+/scratch/
+/tmp/
 *.duckdb
 *.duckdb.wal
 
 # Debug outputs (keep directory via logs/.gitkeep)
 logs/*.jsonl
+logs/periods/
 logs/**/*.parquet
 logs/**/*.png
 logs/**/*.json
+logs/**/*.log
+logs/**/*.html
+logs/**/*.csv
 !logs/.gitkeep
 
 # Python
@@ -36,9 +40,15 @@ venv/
 # Jupyter
 .ipynb_checkpoints/
 
-# Rendered pipeline (optional: commit for reproducibility)
-goldsky/order_filled_backfill.rendered.yaml
+# Third-party clone (HF Polymarket_data toolkit; has its own git repo)
+/Polymarket_data/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# DuckDB spill files
+/.tmp/
+
+# Private notes (never pushed)
+/private/

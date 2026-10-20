@@ -2,16 +2,44 @@
 
 from __future__ import annotations
 
-from src.analysis.partition import register_order_flow_views
-from src.analysis.event_grouping import register_event_views
+import os
+
+from src.analysis.partition import minority_train_test_split_enabled, register_order_flow_views
+from src.analysis.event_grouping import register_event_views, resolved_by_cutoff_sql
 from src.lib.debug import debug_step
 from src.lib.duck import get_duck, r2_uri
 
 
-def register_pnl_views(con) -> None:
-    """Create pnl_user_asset and pnl_account views (requires order_filled + metadata views)."""
-    con.execute(
+def register_pnl_views(con, *, taker_view: str | None = None) -> None:
+    """Create pnl_user_asset and pnl_account views (requires order_filled + metadata views).
+
+    If ``taker_view`` is set (e.g. ``takers_evt_train``), it overrides the default
+    ``takers`` / ``takers_train`` choice from ``MINORITY_LABEL_SPLIT``.
+    """
+    if taker_view is not None:
+        taker_src = taker_view
+    else:
+        taker_src = "takers_train" if minority_train_test_split_enabled() else "takers"
+    universe = os.environ.get("PNL_MARKET_UNIVERSE", "all").strip().lower() or "all"
+    if universe not in {"all", "resolved_by_fill_cutoff"}:
+        raise RuntimeError("PNL_MARKET_UNIVERSE must be all or resolved_by_fill_cutoff")
+    if universe == "resolved_by_fill_cutoff":
+        taker_source_sql = f"""
+          (
+            SELECT t.*
+            FROM {taker_src} t
+            JOIN outcome_tokens ot0
+              ON CAST(ot0.token_id AS VARCHAR) = CAST(t.asset AS VARCHAR)
+            JOIN markets m0 ON m0.market_id = ot0.market_id
+            WHERE {resolved_by_cutoff_sql(
+                "m0", f"(SELECT MAX(CAST(block_timestamp AS BIGINT)) FROM {taker_src})"
+            )}
+          )
         """
+    else:
+        taker_source_sql = taker_src
+    con.execute(
+        f"""
         CREATE OR REPLACE VIEW pnl_user_asset AS
         WITH signed AS (
           SELECT
@@ -20,7 +48,7 @@ def register_pnl_views(con) -> None:
             CASE WHEN upper(side) = 'BUY' THEN amount_shares ELSE -amount_shares END AS s_shares,
             CASE WHEN upper(side) = 'BUY' THEN amount_usdc ELSE -amount_usdc END AS s_usdc,
             fee
-          FROM takers
+          FROM {taker_source_sql}
         )
         SELECT
           s.user_id,
@@ -58,6 +86,13 @@ def main() -> None:
         register_order_flow_views(con)
         register_event_views(con)
         register_pnl_views(con)
+        dbg.log(
+            "meta",
+            "pnl_taker_source",
+            "takers_train (first 3 week_index buckets)" if minority_train_test_split_enabled() else "takers (full window)",
+        )
+        universe = os.environ.get("PNL_MARKET_UNIVERSE", "all").strip().lower() or "all"
+        dbg.log("meta", "pnl_market_universe", universe)
 
         acct = con.execute("SELECT * FROM pnl_account").df()
         dbg.log("ingest", "n_taker_accounts", len(acct))
@@ -115,12 +150,21 @@ def main() -> None:
             dbg.assertion("flat_positions", "yellow", f"{nonzero} (user,asset) rows with non-zero net shares — expected small if fees/rounding")
 
         # Export to R2 for downstream steps
+        label_scope = "train_weeks_0_2" if minority_train_test_split_enabled() else "all_window"
         uri = r2_uri("derived", "pnl_account.parquet")
-        con.execute(f"COPY pnl_account TO '{uri}' (FORMAT PARQUET, OVERWRITE_OR_IGNORE true)")
+        con.execute(
+            f"COPY (SELECT *, '{label_scope}' AS label_scope, '{universe}' AS market_universe "
+            "FROM pnl_account) "
+            f"TO '{uri}' (FORMAT PARQUET, OVERWRITE_OR_IGNORE true)"
+        )
         dbg.log("export", "pnl_account_r2", uri)
 
         uri2 = r2_uri("derived", "pnl_user_asset.parquet")
-        con.execute(f"COPY pnl_user_asset TO '{uri2}' (FORMAT PARQUET, OVERWRITE_OR_IGNORE true)")
+        con.execute(
+            f"COPY (SELECT *, '{label_scope}' AS label_scope, '{universe}' AS market_universe "
+            "FROM pnl_user_asset) "
+            f"TO '{uri2}' (FORMAT PARQUET, OVERWRITE_OR_IGNORE true)"
+        )
         dbg.log("export", "pnl_user_asset_r2", uri2)
 
 

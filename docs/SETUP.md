@@ -1,5 +1,11 @@
 # Stage 1 setup: R2, Goldsky, DuckDB, Python
 
+> **Goldsky is retired (2026-10-07).** The Goldsky YAML, `render_pipeline_yaml`,
+> `sync_goldsky_r2_secret`, `wait_for_backfill`, the turbo half of `stage2_ingest`, the CLI and
+> all `GOLDSKY_*` keys were removed. Goldsky sections below are historical: they document how the
+> existing R2 `order_filled/` data was produced and cannot be run. Polygon RPC helpers now live in
+> `src/lib/polygon.py`; Stage 2 metadata helpers in `src/data/stage2_metadata.py`.
+
 This document is the single source of truth for **prerequisites**, **one-time provisioning**, and **day-to-day orchestration** of the informed-minority replication pipeline (Oct–Dec 2024 sample).
 
 ## 1. Prerequisites
@@ -231,6 +237,32 @@ python -m src.analysis.classification
 
 Writes `labels/account_classification.parquet` on R2.
 
+### Step J2 — Stage 1 rigor gates (authoritative classification)
+
+The unrestricted classification above is retained for sensitivity only. Run the complete
+cutoff-valid Stage 1 audit:
+
+```bash
+python -m src.data.verify_ingest
+python -m src.analysis.partition
+python -m src.analysis.coverage_audit
+python -m src.analysis.sign_construct_audit
+python -m src.analysis.multiple_testing
+python -m src.analysis.population_audit
+python -m src.analysis.market_closure
+python -m src.analysis.composition_audit
+python -m src.analysis.trader_sanity
+python -m src.analysis.stage1_gate
+```
+
+Nominal cutoff-valid labels are written to
+`labels/account_classification_stage1_restricted.parquet`; downstream identity-based work
+must use the FDR-controlled
+`labels/account_classification_stage1_fdr_q05.parquet`. The final machine-readable
+verdict is `logs/stage1_gate/stage1_verdict.json`, and the human summary is
+[`docs/stage1_rigor_memo.md`](stage1_rigor_memo.md). Never use the unrestricted headline
+downstream when `coverage_audit` reports material post-cutoff volume.
+
 ### Step K — OIB + pricing-error regression
 
 ```bash
@@ -238,6 +270,28 @@ python -m src.analysis.oib_regression
 ```
 
 **Debug:** `logs/oib_regression/regression_*.parquet`, scatter PNGs.
+
+### Step K2 (optional) — Event-split OOS persistence (paper Task 5)
+
+Random **event_id** train/test split, independent sign randomization + classification on each arm, transition matrix (`P(Skilled test | Skilled train)`). Uses the same **`takers`** / **`ANALYSIS_*`** window as Steps F–K (orthogonal to **`MINORITY_LABEL_SPLIT`** week buckets). Per-seed outputs use `_seed{seed}` R2 suffixes and `logs/event_split_persistence/seed_{seed}/`; the robustness runner writes aggregate Parquet summaries.
+
+```bash
+python -m src.analysis.event_split_persistence
+python -m src.analysis.event_split_robustness  # seeds from EVENT_OOS_SEEDS
+```
+
+Env: **`EVENT_OOS_TRAIN_FRAC`**, **`EVENT_OOS_SEED`**, **`EVENT_OOS_SEEDS`** (see [.env.example](../.env.example)); reuses **`SIGN_RANDOMIZATION_ITERATIONS`** / **`SIGN_RANDOMIZATION_SEED`**.
+
+### Step K3 — Favorite-buying attribution
+
+Attribute each classified group's settled PnL to favorite buys, underdog buys, and sells, with thresholds 0.50/0.75/0.90:
+
+```bash
+FAVORITE_ANALYSIS_WEEK=train python -m src.analysis.favorite_buying
+FAVORITE_ANALYSIS_WEEK=test python -m src.analysis.favorite_buying
+```
+
+Outputs are under `logs/favorite_buying/`.
 
 ### Step L — Notebook narrative
 
@@ -247,10 +301,40 @@ jupyter lab notebooks/stage1.ipynb
 
 The notebook re-runs the analysis path and aggregates `logs/*.jsonl` into a **Run Report** markdown cell.
 
+### Step M — Stage 2 recent-period ingest (CLOB V2)
+
+Needs the `turbo` CLI on `PATH` (`export PATH="$HOME/.goldsky/bin:$PATH"`) and `goldsky login`.
+
+```bash
+PYTHONUNBUFFERED=1 PERIOD_ID=recent_2026 STAGE2_MAX_SLICES=1 python -m src.data.stage2_ingest
+```
+
+- Plans newest-first `STAGE2_SLICE_HOURS` slices back `STAGE2_LOOKBACK_DAYS` from chain head minus
+  `STAGE2_TIP_LAG_MINUTES`. The plan and every step's status live in
+  `data/periods/<PERIOD_ID>/ingest_manifest.json` (mirrored to `periods/<PERIOD_ID>/manifests/`).
+- Each slice deploys one Turbo `job: true` pipeline that writes to `periods/<PERIOD_ID>/order_filled/slice_<bs>_<be>/`,
+  excludes 5m/15m crypto Up/Down tokens, then verifies (unique ids, block bounds, leakage, exact RPC
+  spot-check counts) and fetches Gamma metadata for the tokens it saw.
+- Re-running resumes: verified slices are skipped, Gamma pages are cached under `data/periods/<PERIOD_ID>/gamma/`,
+  and an already-deployed slice is polled rather than re-applied. Raise `STAGE2_MAX_SLICES` to continue.
+- `STAGE2_MAX_SLICES` is the total number of verified slices to reach (not "new this run").
+  `STAGE2_MAX_TOTAL_ROWS` stops before starting a new slice once verified rows reach the cap.
+- Excludes markets tagged `STAGE2_EXCLUDE_TAGS` (default `sports,esports,weather`) using a
+  token-prefix `NOT IN` list kept under the Turbo API's ~1 MB request limit. Some rows leak through,
+  so re-filter by tag in analysis; the leakage is reported per slice as `tag_leakage`.
+- Each slice's exclusion list (`data/periods/<PERIOD_ID>/slices/excluded_*.json`) and traded tokens
+  (`assets_*.json`) are saved. Verification always uses the exact list the slice was deployed with.
+- Fills from `0xe3333700…` are Exchange v3 **Combos** (parlay positions) and have no Gamma metadata.
+- Unfiltered (Oct 2026), a 12h slice is about 1.1M rows; with the default exclusions it is about
+  180k rows. Either way it takes 25–40 min of a size-S pipeline.
+
 ## 5. Cost & quota (rough)
 
 - **R2:** Stage 1 sample usually **&lt; 10 GB** storage; pipeline writes are **Class A** operations — stay within free tier for a first backfill if you filter `asset IN (...)`.
 - **Goldsky:** Turbo backfills consume project credits; bounded block range + token filter minimizes cost.
+  Billing is $1 per 100k sink events after 1M free per cycle, plus worker hours (750 free), drawn
+  from the one-time $100 starter credit. Recent (2026) unfiltered volume, excluding short crypto, is
+  about 2.2M rows per day, so events dominate the cost.
 - **Local:** DuckDB is in-process; peak RAM during sign randomization scales with `(n_iterations × max_events_per_user)` per user loop (still modest for filtered universes).
 
 ## 6. Reading debug artifacts
@@ -319,6 +403,14 @@ If groups are sparse, drop redundant OIB columns or merge rare groups — regres
 | [`src/analysis/pnl.py`](../src/analysis/pnl.py) | Realized PnL |
 | [`src/analysis/sign_randomization.py`](../src/analysis/sign_randomization.py) | Event-level null |
 | [`src/analysis/classification.py`](../src/analysis/classification.py) | Labels |
+| [`src/analysis/coverage_audit.py`](../src/analysis/coverage_audit.py) | Cutoff sensitivity + primary labels |
+| [`src/analysis/multiple_testing.py`](../src/analysis/multiple_testing.py) | Eligible cohort + BH FDR |
+| [`src/analysis/population_audit.py`](../src/analysis/population_audit.py) | Identity/population diagnostics |
+| [`src/analysis/market_closure.py`](../src/analysis/market_closure.py) | Maker/taker/fee closure |
+| [`src/analysis/composition_audit.py`](../src/analysis/composition_audit.py) | Category/event concentration |
+| [`src/analysis/trader_sanity.py`](../src/analysis/trader_sanity.py) | Top-winner and Skilled histories |
+| [`src/analysis/stage1_gate.py`](../src/analysis/stage1_gate.py) | Gate A/B verdict + memo |
 | [`src/analysis/oib_regression.py`](../src/analysis/oib_regression.py) | OIB + Δ error |
+| [`src/analysis/event_split_persistence.py`](../src/analysis/event_split_persistence.py) | Event OOS persistence (paper §5) |
 | [`goldsky/order_filled_backfill.yaml`](../goldsky/order_filled_backfill.yaml) | Human stub |
 | `goldsky/order_filled_backfill.rendered.yaml` | **Generated** — do not hand-edit |

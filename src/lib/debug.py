@@ -16,6 +16,12 @@ from typing import Any, Literal
 AssertionLevel = Literal["green", "yellow", "red"]
 
 
+def _default_logs_dir() -> Path:
+    from src.lib.period import logs_dir
+
+    return logs_dir()
+
+
 def _utc_ts() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
@@ -25,7 +31,7 @@ class DebugReport:
     """Per-step JSONL log + Rich table summary + optional diagnostic Parquet."""
 
     step_name: str
-    logs_dir: Path = field(default_factory=lambda: Path("logs"))
+    logs_dir: Path = field(default_factory=lambda: _default_logs_dir())
     _events: list[dict[str, Any]] = field(default_factory=list)
     _assertions: list[dict[str, Any]] = field(default_factory=list)
     _start: float = field(default_factory=time.perf_counter)
@@ -153,7 +159,7 @@ class DebugReport:
 
 @contextmanager
 def debug_step(step_name: str, logs_dir: Path | None = None) -> Iterator[DebugReport]:
-    rep = DebugReport(step_name=step_name, logs_dir=logs_dir or Path("logs"))
+    rep = DebugReport(step_name=step_name, logs_dir=logs_dir or _default_logs_dir())
     try:
         yield rep
     except Exception as e:

@@ -4,11 +4,19 @@ Replicates core methodology from *Prediction Market Accuracy: Crowd Wisdom or In
 
 **Orchestration, prerequisites, and troubleshooting:** see [docs/SETUP.md](docs/SETUP.md).
 
+**Data source:** Goldsky is retired (code, credentials and CLI removed; `tests/test_no_goldsky.py`
+guards against reintroduction). Fills already on R2 came from Goldsky; new history comes from the
+HuggingFace `SII-WANGZJ/Polymarket_data` release, validated row-for-row by
+`scripts/validate_hf_sample.py`.
+
+**Authoritative Stage 1 result:** [docs/stage1_rigor_memo.md](docs/stage1_rigor_memo.md).
+The original unrestricted headline is superseded because most volume belongs to markets
+resolving after the fill cutoff; downstream work must use the cutoff-valid primary labels.
+
 ```bash
 uv sync
 # or: pip install -r requirements.txt && pip install -e .
-cp .env.example .env   # fill R2 + Goldsky
-python -m src.data.sync_goldsky_r2_secret   # push R2 keys to Goldsky (after goldsky login)
+cp .env.example .env   # fill R2 + Polygon RPC
 python -m src.lib.duck --healthcheck
 python -m src.data.load_markets
 ```
