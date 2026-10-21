@@ -7,6 +7,7 @@ name = "polymarket-replication"
 version = "0.1.0"
 description = "Testing the informed-minority claim on Polymarket trade data (R2 + DuckDB)"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
     "duckdb>=1.1.0",

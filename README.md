@@ -167,3 +167,7 @@ tests/
 Gómez-Cram, R., Guo, Y., Jensen, T. I., & Kung, H. (2026). *Prediction Market Accuracy: Crowd
 Wisdom or Informed Minority?* The replication tasks taken from it are listed in
 [docs/methods/paper_tasks.md](docs/methods/paper_tasks.md).
+
+## License
+
+[MIT](LICENSE)
