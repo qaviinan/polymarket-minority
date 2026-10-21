@@ -76,18 +76,16 @@ glossary of the terms used throughout.
 
 ## How it works
 
-```
-Polygon order fills ──┐
- (on-chain, per trade) │     ┌──────────────┐    ┌───────────────────┐    ┌──────────────────┐
-                       ├──▶  │ Cloudflare R2 │──▶│ DuckDB: maker/taker│──▶│ PnL per wallet,   │
-Gamma API metadata ───┘     │  (Parquet)    │    │ split, signing     │    │ resolved markets  │
- (markets, events, payouts) └──────────────┘    └───────────────────┘    └────────┬─────────┘
-                                                                                   │
-   ┌──────────────────────────┬────────────────────────────┬───────────────────────┤
-   ▼                          ▼                            ▼                       ▼
- Event-level sign test   Price-calibrated null      OIB → pricing-error     Audits: coverage,
- + BH FDR → labels       (who survives?)            regressions             accounting closure,
-                                                                            composition
+```mermaid
+flowchart LR
+  A["Polygon order fills<br/>(one row per trade)"] --> R[("Cloudflare R2<br/>Parquet")]
+  B["Gamma API metadata<br/>(markets, events, payouts)"] --> R
+  R --> D["DuckDB<br/>maker/taker split, signing"]
+  D --> P["PnL per wallet<br/>(resolved markets only)"]
+  P --> S["Event-level sign test<br/>+ BH FDR → labels"]
+  P --> C["Price-calibrated null<br/>(who survives?)"]
+  P --> O["OIB → pricing-error<br/>regressions"]
+  P --> U["Audits: coverage,<br/>accounting, composition"]
 ```
 
 - **Data.** 2024 fills were indexed from Polygon (through Goldsky, since retired) into R2 as
