@@ -33,8 +33,6 @@ Working documents that build on the findings. They are not results.
 - [Strategy v1](notes/strategy_v1.md): a market-making design informed by reports 1–4.
 - [Alternative-data screen](notes/alt_data_screen.md): which live markets an outside data
   source could plausibly forecast.
-- [Institutional map](notes/institutional_map.md): how money is made in prediction markets,
-  and who is already doing it.
 
 ## Glossary
 
