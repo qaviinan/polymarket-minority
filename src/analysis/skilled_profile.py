@@ -508,19 +508,31 @@ def _plots(themes: pd.DataFrame, prices: pd.DataFrame, cohorts: list[str]) -> No
     plt.savefig(OUT_DIR / "theme_mix_by_cohort.png", dpi=130)
     plt.close()
 
+    names = {"Skilled_top10": "Skilled, top 10", "Skilled_rest": "Skilled, rest", "Lucky_Winner": "Lucky",
+             "Unlucky_Loser": "Unlucky", "Unskilled_Loser": "Unskilled"}
+    colors = {"Skilled_top10": "#1f4e79", "Skilled_rest": "#5b9bd5", "Lucky_Winner": "#a9a9a9",
+              "Unlucky_Loser": "#c9c9c9", "Unskilled_Loser": "#e3e3e3"}
+    buckets = {"<0.10": "<10¢", "0.10-0.25": "10–25¢", "0.25-0.50": "25–50¢", "0.50-0.75": "50–75¢",
+               "0.75-0.90": "75–90¢", ">=0.90": "≥90¢"}
     buys = prices[prices["side"].eq("BUY")]
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(11, 3.8), sharey=True)
     for ax, col, title in (
-        (axes[0], "volume_share", "Share of cohort taker volume"),
-        (axes[1], "pnl_share", "Share of cohort net PnL"),
+        (axes[0], "volume_share", "Share of group's taker volume"),
+        (axes[1], "pnl_share", "Share of group's net PnL"),
     ):
         pv = buys.pivot_table(index="price_bucket", columns="cohort", values=col, observed=True)
-        pv = pv[[c for c in cohorts if c in pv.columns]]
-        pv.plot(kind="bar", ax=ax, width=0.8)
-        ax.set_title(f"BUY fills: {title}")
-        ax.set_xlabel("Execution price")
+        pv = pv[[c for c in cohorts if c in pv.columns]].reindex([b for b in buckets if b in pv.index])
+        pv.index = [buckets[b] for b in pv.index]
+        (pv * 100).rename(columns=names).plot(kind="bar", ax=ax, width=0.8, color=[colors[c] for c in pv.columns],
+                                              edgecolor="white", linewidth=0.5)
+        ax.set_title(title, fontsize=10)
+        ax.set_xlabel("Buy price")
+        ax.set_ylabel("%")
+        ax.tick_params(axis="x", rotation=0)
         ax.axhline(0, color="gray", lw=0.5)
-        ax.legend(fontsize=7)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.legend(fontsize=8, frameon=False)
+    axes[1].get_legend().remove()
     plt.tight_layout()
     plt.savefig(OUT_DIR / "buy_price_buckets_by_cohort.png", dpi=130)
     plt.close()

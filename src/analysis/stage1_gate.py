@@ -169,29 +169,7 @@ def main() -> None:
                     f"{profiles['heavy_favorite_fill_share'].min():.1%} to "
                     f"{profiles['heavy_favorite_fill_share'].max():.1%}."
                 )
-        memo = f"""# Stage 1: is there a skilled minority? (Oct–Nov 2024)
-
-[← All reports](../README.md)
-
-> **Question.** Do some Polymarket takers win more consistently than luck allows, as
-> Gómez-Cram et al. claim?
->
-> **Result.** {statistical['observed_nominal']:,} of {statistical['n_eligible']:,} eligible wallets ({statistical['eligible_skilled_share']:.2%}) pass the
-> event-level sign-randomization test at p<0.05, against {statistical['expected_under_discrete_null']:.1f} expected by chance
-> (z={statistical['excess_z']:.2f}). {statistical['bh_q05_survivors']:,} ({statistical['bh_q05_survivors']/statistical['n_eligible']:.2%}) survive Benjamini–Hochberg
-> at q=0.05.
->
-> **What it means.** The profits are not random, but that alone does not show the winners are
-> *informed*. Later reports show most of this group is buying heavy favorites
-> ([report 3](03_favorite_buying.md)) and only 8 survive a price-aware null
-> ([report 2](02_who_are_the_skilled.md)).
-
-**Data:** taker fills from Oct 5 to Nov 4, 2024, restricted to markets that resolved before the
-last fill. **Code:** `python -m src.analysis.stage1_gate`.
-
-**Glossary.** *Gate A* = the statistical and accounting checks that must pass before skill
-labels are used downstream. *Gate B* = the audit outputs that must exist. *Stage 4* = follow-up
-work that tracks specific wallets. *K* = number of distinct events a wallet traded.
+        memo = f"""# Skill test memo
 
 ## Verdict
 
@@ -273,7 +251,7 @@ Top-five Skilled profiles:
 Gate A establishes non-random profitability; it does **not** by itself establish an
 informational mechanism. That distinction is left to OIB/toxicity tests. Strategy,
 category, and cross-wallet evidence for the Skilled cohort is in
-`logs/skilled_profile/` and `docs/methods/pipeline.md` (Skilled-account analysis).
+`logs/skilled_profile/` and `docs/methods.md`.
 
 ## What replicated and what did not
 
@@ -285,13 +263,8 @@ category, and cross-wallet evidence for the Skilled cohort is in
   only if the Gate A line above is PASS.
 """
         memo_path = (
-            Path("docs/reports/05_stage2_skill_test.md") if period_id() else Path("docs/reports/01_stage1_skill_test.md")
+            out_dir / "memo_stage2.md" if period_id() else out_dir / "memo.md"
         )
-        if period_id():
-            memo = memo.replace(
-                "# Stage 1: is there a skilled minority? (Oct–Nov 2024)",
-                "# Stage 2: skill test on the recent period",
-            )
         memo_path.write_text(memo, encoding="utf-8")
         dbg.log("export", "memo", str(memo_path))
         dbg.log("export", "verdict", str(out_dir / "stage1_verdict.json"))

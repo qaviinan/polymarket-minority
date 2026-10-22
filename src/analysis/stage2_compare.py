@@ -1,7 +1,7 @@
 """Stage 2: compare the recent period to Stage 1 and measure 2024-wallet survival.
 
 Reads 2024 FDR labels from the Stage 1 log tree (never period-scoped) and the current
-``PERIOD_ID`` labels from ``logs/periods/<id>/``. Does not call Goldsky.
+``PERIOD_ID`` labels from ``logs/periods/<id>/``.
 """
 
 from __future__ import annotations
@@ -188,7 +188,7 @@ def main() -> None:
 **Fill window:** {pd.to_datetime(vol[2], unit='s', utc=True)} → {pd.to_datetime(vol[3], unit='s', utc=True)}
 ({(int(vol[3]) - int(vol[2])) / 86400:.1f} days)
 
-Goldsky was **not** called for this analysis. Fills are the 27 already-verified R2 slices
+Fills are the 27 already-verified R2 slices
 (2026-09-21 09:00Z to 2026-10-04 21:00Z). Combos (Exchange v3) and sports/esports/weather
 markets are dropped in analysis (ingest leakage re-filtered).
 
@@ -249,7 +249,7 @@ Either a clean negative (the 2024 label does not carry; almost nobody is still a
 or a thin positive (a handful of wallets remain Skilled) is evidence. A 13.5-day
 non-election window is not a replication of Oct–Nov 2024; it is a different market.
 """
-        out = Path("docs/reports/06_stage2_vs_2024.md")
+        out = Path("logs/periods") / "stage2_compare.md"
         out.write_text(report, encoding="utf-8")
         dbg.log("export", "report", str(out))
         (logs_path("stage2_compare") / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

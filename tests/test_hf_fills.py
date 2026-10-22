@@ -67,7 +67,7 @@ def test_u256_little_endian_micro_units():
     assert got[0] == 0.022 and got[1] == 0.0
 
 
-def test_maker_sell_and_taker_summary_match_goldsky_shape():
+def test_maker_sell_and_taker_summary_match_fill_shape():
     exchange = EXCHANGE_ADDRESS["CTF_EXCHANGE_V2"]
     raw = _raw([
         _row(),

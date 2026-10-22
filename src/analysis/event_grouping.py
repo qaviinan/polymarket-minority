@@ -42,7 +42,7 @@ DROP_THEMES = {"Sports & esports", "Weather & science"}
 def apply_recent_universe_filters(con: duckdb.DuckDBPyConnection) -> None:
     """Drop Exchange-v3 combos and sports/esports/weather fills for a PERIOD_ID run.
 
-    Ingest already tries to exclude tagged tokens at Goldsky time, but leakage is
+    Ingest already tries to exclude tagged tokens, but leakage is
     expected; analysis re-filters from metadata. Combos have no Gamma catalog row.
     """
     import os
