@@ -1,13 +1,5 @@
 # Does buying favorites pay? (Oct–Nov 2024)
 
-[← All reports](../README.md)
-
-> **Question.** Most "skilled" wallets buy contracts priced at 90¢ or more. Is that a real
-> edge a taker could copy?
->
-> **Answer.** No. Favorites are roughly fairly priced, and a buy-the-favorite rule earns about
-> 0% at every horizon tested. The mispricing is in longshots, and it pays makers, not takers.
-
 **Verdict: no, not as a taker.**
 
 - Favorites at 90¢ and above are roughly fairly priced.
@@ -119,7 +111,7 @@ that hit one, or paid spread round-tripping, were labeled Unlucky or Unskilled.
 The original sign-flip null treats a +5¢ win and a −5¢ loss as equally likely. On a 95¢ bet the
 real loss is −95¢. Under that null, a streak of 20 favorite wins has p≈10⁻⁶; under fair pricing
 it happens 36% of the time. The price-calibrated null corrects this, and only 8 of the 484
-survive (§5.8).
+survive ([methods](../methods.md#price-calibrated-null)).
 
 **(b) The window rewarded favorites.** Skilled earned $138.8k on ≥90¢ fills (0.95% ROI). If
 other takers' ROI at the same price is applied (to the cent, excluding the Skilled group), the
@@ -147,9 +139,9 @@ cannot capture that information state, which is why the horizon control doesn't 
 the [survivor dossier](02_who_are_the_skilled.md), 87% of 0xfffe's passive fills there were
 filled by takers buying the losing side for under 1¢.
 
-## 4. Implications for strategy v1 (Sleeve D)
+## 4. Implications
 
-- **Kill taker favorite carry.** At the market level the edge is zero or negative, before paying
+- **Taker favorite carry doesn't pay.** At the market level the edge is zero or negative, before paying
   the ask and before 2026 fees (0.02–0.3¢ per share at q≥90¢).
 - **The surviving idea sits on the maker side.** Rest bids at 98–99.5¢ in markets that are
   *decided but unsettled*, where longshot takers are the counterparty. That requires:

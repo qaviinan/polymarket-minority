@@ -1,16 +1,7 @@
 # Who are the skilled traders, really? (Oct–Nov 2024)
 
-[← All reports](../README.md)
-
-> **Question.** The basic skill test treats a +5¢ win and a −5¢ loss as equally likely. Which
-> wallets still beat a null that accounts for the price they paid, and how did they make money?
->
-> **Answer.** 39 wallets survive; three of them earn 96% of the money. They buy after public
-> news, trade live events faster than the market, or buy pregame NFL favorites. None looks like
-> an insider.
-
 **Bottom line.** 39 wallets beat the price-calibrated null at BH q<0.05. 8 of them are also
-FDR-Skilled in Stage 1. Their PnL comes from three businesses: buying after the news, trading
+among the 484 Skilled wallets from report 1. Their PnL comes from three businesses: buying after the news, trading
 live events faster than the market, and pregame NFL favorites. In this sample none of them looks
 like an insider who knew the outcome in advance. The single most "pre-news" trader in the top 10
 (0x4dfd, Israel→Iran) narrowly missed the cut.
@@ -170,7 +161,6 @@ on Iran began about **23:00 UTC Oct 25**.
 Size went up on Oct 25 at single-digit and teen prices, hours before the strike. That is
 consistent with an informed or very well-read geopolitical trader. The wallet had been
 accumulating the October YES for two weeks, though, so a persistent thesis is equally plausible.
-This is the case worth forward-tracking with the informed-flow detector (Next step 0b).
 
 ## 3. Edge taxonomy
 
@@ -186,13 +176,12 @@ This is the case worth forward-tracking with the informed-flow detector (Next st
 the outcome was publicly known**. About 12% came **during** the event, on public information
 processed faster. Most of the rest is pregame sports risk. None of the 39 shows the signature of
 inside information: large size at long odds shortly before an unannounced event. The calibrated
-null catches "prices were too low for near-certain things", not "knew the future". So these
-survivors validate **Sleeve D (favorite / resolution carry)** and a live-event latency niche.
-They do not validate copy-trading.
+null catches "prices were too low for near-certain things", not "knew the future". Copying
+these wallets would not have worked.
 
 ## Caveats
 
-- Only one month of data (Oct 6 – Nov 5, 2024), dominated by the election.
+- Only one month of data (Oct 5 – Nov 4, 2024), dominated by the election.
 - Maker fills inflate total PnL relative to the taker-only test: 0xfffe has $195k total but $70k
   taker. Splits and merges are not in the fill data. That is why 0xf566's SNL position shows up
   as SELL NO; it is economically equivalent to buying YES.

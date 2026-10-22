@@ -1,20 +1,10 @@
 # Few bets, big wins: concentrated winners (Oct–Nov 2024)
 
-[← All reports](../README.md)
-
-> **Question.** The skill test needs at least 5 events per wallet. What about wallets that
-> placed one to three large bets in a single category and won?
->
-> **Answer.** Mostly election bettors on one coin flip, mirrored by an even larger group of
-> losers. Outside the election, a small subset did trade ahead of the price (+0.9¢ per share
-> at 24h), led by the Ballon d'Or and the Israel strike on Iran. No individual wallet can be
-> certified with so few bets.
-
-This report examines accounts that the Stage 1 skill test cannot see: wallets that made only a
+This report examines accounts that the skill test in report 1 cannot see: wallets that made only a
 few bets, all in one category, and won (or lost) a lot.
 
 Data: Polymarket order fills from 2024-10-05 to 2024-11-04 (255,566 accounts, $2.4B). Unlike
-Stage 1, this report uses **every** market, including those that resolved after the data
+the skill test, this report uses **every** market, including those that resolved after the data
 ends, such as the 2024 presidential election. Each in-window position is scored at its final
 resolution payout. Code: `python -m src.analysis.concentrated_winners`. Outputs are in
 `logs/concentrated_winners/`.
@@ -36,13 +26,14 @@ resolution payout. Code: `python -m src.analysis.concentrated_winners`. Outputs 
    For example, 30–50¢ bets win 16% of the time against a 39% price, and the event-bootstrap
    CI excludes zero. Net PnL for the population is −$17.0M against a price-fair expectation
    of −$0.26M.
-3. **A small non-election subset does show outcome-independent evidence of information.**
+3. **A small non-election subset may have traded ahead of the price.**
    Concentrated winners' fills outside the election bloc (453 accounts) repriced in their
    favor more than the average same-side flow in the same token: **+0.9¢ per share at 24h
    (95% CI +0.25 to +1.7¢)**. The comparable losers show −0.3¢. The 169 winners whose main
    theme is not the election made +$671k in total. The effect is concentrated in a few
    discrete-news events, led by the **Ballon d'Or** (Rodri) and the **Israel strike on Iran**,
-   and only about half of individual winners show it.
+   and only about half of individual winners show it. Winners were picked for making money,
+   which favors entries just before a repricing, so part of this markout is selection.
 4. **No individual account can be certified.** With 1–3 bets, the best attainable
    price-calibrated p-value is about the product of the entry prices. 0 of 137,152 accounts
    survive multiple-testing correction. What can be done is in Section 6.
@@ -66,9 +57,9 @@ volume in one theme, and |PnL| of at least $1,000.
 | Non-election winners | 169 | +$0.67M (median $2.0k) |
 | Non-election losers | 375 | −$1.38M |
 
-**Stage 1 never sees them.** 88% of the winners (1,702) traded only markets that resolved
+**The skill test never sees them.** 88% of the winners (1,702) traded only markets that resolved
 after the data ends, and 221 more failed eligibility (fewer than 10 trades or 5 events).
-Only 9 carried a Stage 1 label, and those were Lucky_Winner.
+Only 9 carried a skill-test label, and those were Lucky_Winner.
 
 **Winners by theme:**
 
@@ -238,7 +229,7 @@ calibrated p. The top entries are three Ballon d'Or wallets, two Israel–Iran w
 
 ---
 
-## 6. What we can do about concentrated knowledge
+## 6. Next steps
 
 Outcome-based skill tests cannot work for one-shot bettors. The question has to change from
 "is this account skilled?" to "**is this flow informed?**", tested on evidence that does not
@@ -249,8 +240,8 @@ depend on the outcome.
    wallets with few prior bets, and (d) larger than recent token volume. Then test **out of
    sample** whether flagged flow predicts repricing over the next 1–24h, using the
    timing-adjusted markout above. If it does, that is a tradable "follow informed flow" signal
-   on Polymarket itself. Unlike the crypto copy-trade, it does not need an external market.
-2. **Forward-track the watchlist in Stage 2.** Most one-shot wallets never trade again.
+   on Polymarket itself.
+2. **Forward-track the watchlist.** Most one-shot wallets never trade again.
    Measure re-appearance, and whether returning wallets keep beating price in the same
    category.
 3. **Extend history backward.** Pulling each wallet's pre-October-2024 fills (wallet age, past
