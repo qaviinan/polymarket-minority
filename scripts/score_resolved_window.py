@@ -1,8 +1,8 @@
-"""Score the resolved-market aggregate produced from the extended 2026 tape.
+"""Score the resolved-market aggregate built from the extended 2026 tape.
 
-The full fill tape does not fit on disk. ``user_asset.parquet`` is the one-pass
-aggregate (taker and maker, combo exchange dropped, payouts from the HuggingFace
-markets file). This script turns it into event-level sign-randomization labels.
+The full fill tape does not fit on disk, so ``aggregate_resolved_days.py`` writes one
+aggregate per day (taker and maker, combo exchange dropped, payouts from the Hugging Face
+markets file). This script combines the days into event-level sign-randomization labels.
 """
 
 from __future__ import annotations

@@ -1,4 +1,8 @@
-"""Paper Task 5: random event-level train/test split, dual sign-randomization + classification, transition matrix."""
+"""Random event-level train/test split.
+
+Runs sign randomization and classification on each half, then builds a train-to-test
+transition matrix of trader groups.
+"""
 
 from __future__ import annotations
 

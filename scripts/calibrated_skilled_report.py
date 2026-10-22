@@ -1,12 +1,12 @@
-"""Trade-level dossier for the 39 accounts that beat their entry prices (calibrated-null BH survivors).
+"""Trade-level report on the 39 accounts that beat their entry prices (calibrated-null BH survivors).
 
-Inputs (local, produced by src.analysis.skilled_profile):
-  logs/skilled_profile/calibrated_null_accounts.parquet
-  logs/skilled_profile/fills_cache.parquet   (all classified accounts' fills; used as price path)
-  logs/calibrated_skilled/markets_gamma.parquet  (Gamma metadata incl. resolution times)
+Inputs (local):
+  logs/skilled_profile/calibrated_null_accounts.parquet  (from src.analysis.skilled_profile)
+  logs/skilled_profile/fills_cache.parquet  (fills of all classified accounts, also the price path)
+  logs/concentrated_winners/market_meta.parquet  (question, event title, theme)
+  logs/calibrated_skilled/markets_gamma.parquet  (Gamma metadata with resolution times)
 
-Outputs in logs/calibrated_skilled/:
-  wallet_summary.csv, positions.csv, fills_enriched.parquet
+Outputs in logs/calibrated_skilled/: wallet_summary.csv, positions.csv, fills_enriched.parquet
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ f["edge_per_share"] = f.eff_won - f.eff_price
 f["h_to_listed_end"] = (f.end_ts - f.ts) / 3600
 f["h_to_resolution"] = (f.umaEndDate_ts - f.ts) / 3600
 
-# Markouts: VWAP of all classified fills on the same token in [t+h-0.5h, t+h+0.5h], else last trade before t+h.
+# Markouts: price of the last classified fill on the same token at or before t+h.
 px = allf[["asset", "ts", "price", "amount_shares"]].sort_values("ts")
 for h in HORIZONS_H:
     tgt = f[["asset", "ts"]].assign(t=f.ts + h * 3600).sort_values("t")

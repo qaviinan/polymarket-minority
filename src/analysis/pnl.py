@@ -149,7 +149,6 @@ def main() -> None:
         else:
             dbg.assertion("flat_positions", "yellow", f"{nonzero} (user,asset) rows with non-zero net shares — expected small if fees/rounding")
 
-        # Export to R2 for downstream steps
         label_scope = "train_weeks_0_2" if minority_train_test_split_enabled() else "all_window"
         uri = r2_uri("derived", "pnl_account.parquet")
         con.execute(

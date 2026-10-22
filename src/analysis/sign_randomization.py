@@ -1,4 +1,4 @@
-"""Event-level sign randomization (10k draws) and null summaries."""
+"""Event-level sign randomization (exact for small K, else 10k draws) and null summaries."""
 
 from __future__ import annotations
 
@@ -50,14 +50,13 @@ def run_sign_randomization_core(
     plot_dir: Path | None = None,
     dbg: Any | None = None,
 ) -> tuple[pd.DataFrame, int, float]:
-    """
-    Paper-faithful event-level direction randomization.
+    """Event-level direction randomization.
 
-    Per draw, each event gets s_k in {+1, -1}; all fills in that event flip BUY/SELL
-    together (sizes, prices, fees fixed). Null PnL is recomputed as
-    sum_k s_k * event_gross_k - total_event_fees where event_gross = event_pnl + event_fees.
+    Each draw gives every event a sign s_k in {+1, -1}, and all fills in the event flip
+    BUY/SELL together (sizes, prices and fees fixed). Null PnL is
+    sum_k s_k * event_gross_k - total_event_fees, where event_gross = event_pnl + event_fees.
 
-    ``acct`` must align with ``ev_df`` (same window). Returns (summary_df, peak_bytes, wall_s).
+    ``acct`` must cover the same window as ``ev_df``. Returns (summary_df, peak_bytes, wall_s).
     """
     users = acct["user_id"].unique()
     event_groups = {uid: sub for uid, sub in ev_df.groupby("user_id", sort=False)}
@@ -67,8 +66,7 @@ def run_sign_randomization_core(
     t0 = time.perf_counter()
     for uid in tqdm(users, desc=tqdm_desc):
         account = acct_by_user.loc[uid]
-        # Classification deterministically excludes these accounts, so
-        # simulating them only adds runtime and cannot change a label.
+        # Classification drops these accounts anyway, so simulating them only costs time.
         if int(account["n_trades"]) < 10:
             continue
         sub = event_groups.get(uid)
@@ -128,9 +126,8 @@ def run_sign_randomization_core(
         else:
             p_skill = float((upper_count + 1) / (n_draws + 1))
             p_loss = float((lower_count + 1) / (n_draws + 1))
-        # Monte Carlo sample means fluctuate by null_std / sqrt(n_iter).
-        # A fixed 1%-of-SD cutoff is only ~1 standard error at 10k draws and
-        # therefore flags roughly one third of healthy simulations.
+        # Allow 3 standard errors of the mean. A fixed 1%-of-SD cutoff is about 1 SE
+        # at 10k draws and flags roughly a third of healthy runs.
         bad_mean = (
             abs(null_mean - (-user_total_fees))
             > 3.0 * null_std / np.sqrt(n_draws)
@@ -262,9 +259,8 @@ def main() -> None:
         con.unregister("_sr")
         dbg.log("export", "sign_randomization_summary_r2", uri)
 
-        # Keep classification inputs atomic: a sign run always publishes the
-        # matching account and user-asset PnL rather than relying on a prior
-        # separately configured pnl.py run.
+        # Publish the account and user-asset PnL this run used, so classification
+        # never pairs these p-values with PnL from a separate pnl.py run.
         acct_uri = r2_uri("derived", "pnl_account.parquet")
         con.register("_acct_aligned", acct)
         con.execute(

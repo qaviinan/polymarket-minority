@@ -1,5 +1,7 @@
 # Is there a skilled minority? (Oct–Nov 2024)
 
+The sign test flags 914 of 11,465 eligible wallets at p < 0.05, against 539 expected by chance, and 484 survive Benjamini–Hochberg. Most of the 484 are favorite buyers, and only 8 also beat the prices they paid.
+
 Taker fills from Oct 5 to Nov 4, 2024, scored only on markets that resolved before the last fill. Method: [methods](../methods.md#skill-test).
 
 | | Wallets | Share of eligible |
@@ -10,19 +12,11 @@ Taker fills from Oct 5 to Nov 4, 2024, scored only on markets that resolved befo
 | Survive Benjamini–Hochberg, q = 0.05 | 484 | 4.22% |
 | Also survive the price-calibrated null | 8 | 0.07% |
 
-The excess over chance is large (z = 16.5), so the profits are not random. Most of the 484 are favorite buyers, though ([report 3](03_favorite_buying.md)), and only 8 beat the prices they paid ([report 2](02_who_are_the_skilled.md)).
+The excess over chance is large (z = 16.5), so the profits are not random. But about 88% of the Skilled wallets' taker volume is buys at 90¢ or more ([figure](../figures/buy_price_buckets_by_cohort.png), [report 3](03_favorite_buying.md)). The 8 that beat their prices are profiled in [report 2](02_who_are_the_skilled.md).
 
 ## Universe
 
-87.8% of taker volume, and 28.9% of active markets, belong to markets that resolved after the last fill. Those are left out; including them would score open positions as if they had settled.
-
-| Label | All markets | Resolved markets only |
-|---|---:|---:|
-| Skilled winner | 1,904 | 914 |
-| Lucky winner | 19,524 | 3,904 |
-| Unlucky loser | 50,939 | 8,523 |
-| Unskilled loser | 17,682 | 1,928 |
-| Excluded (too few trades or events) | 160,377 | 80,795 |
+87.8% of taker volume, and 28.9% of active markets, belong to markets that resolved after the last fill. Those are left out, because including them would score open positions as if they had settled.
 
 ## Checks
 
@@ -33,7 +27,7 @@ The excess over chance is large (z = 16.5), so the profits are not random. Most 
 
 ## Composition
 
-The largest category is the US election, at 19.0% of volume. For the median Skilled wallet, its biggest event accounts for 35% of its absolute PnL. The single largest winner is labelled Lucky, and 13 of the top 20 winners are not labelled Skilled: big, concentrated bets on few events can't pass a test that needs at least five.
+The largest category is the US election, at 19.0% of volume. For the median Skilled wallet, its biggest event accounts for 35% of its absolute PnL. The single largest winner is labelled Lucky, and 13 of the top 20 winners are not labelled Skilled. Big bets on a few events can't pass a test that needs at least five.
 
 Top five Skilled wallets by PnL:
 

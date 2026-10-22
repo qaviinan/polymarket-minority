@@ -1,11 +1,11 @@
-"""Row-level check of the HuggingFace Polymarket_data release against our Goldsky ingests.
+"""Row-level check of the Hugging Face Polymarket_data release against our on-chain ingests.
 
-Samples random windows from Stage 1 (R2 ``order_filled/``, Oct-Nov 2024) and Stage 2 (local
-mirror, Sep-Oct 2026), streams only those time ranges from HF ``users.parquet`` and
-``orderfilled.parquet`` (row-group pruning on ``timestamp``), and compares fills joined on
+Samples random windows from 2024 (R2 ``order_filled/``, Oct-Nov 2024) and 2026 (local
+mirror, Sep-Oct 2026), streams only the matching block ranges from HF ``users.parquet`` and
+``orderfilled.parquet`` (row-group pruning on ``block_number``), and compares fills joined on
 ``(transaction_hash, log_index)``. Only the filtered samples are written locally.
 
-    python scripts/validate_hf_sample.py            # 2 x 6h windows per stage
+    python scripts/validate_hf_sample.py            # 2 x 6h windows per period
     VALIDATE_WINDOWS=3 VALIDATE_HOURS=4 python scripts/validate_hf_sample.py
 """
 
@@ -103,7 +103,9 @@ def hf_rows(con, b0: int, b1: int) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def universe_assets(con, stage: str, g: pd.DataFrame) -> set[str]:
-    """Stage 1 used a fixed token list; Stage 2 used a per-slice exclusion list, so use in-window assets."""
+    """The 2024 run used a fixed token list. The 2026 period used a per-slice exclusion
+    list, so its universe is the assets seen in the window.
+    """
     if stage == "stage1_2024":
         q = f"SELECT DISTINCT token_id FROM read_parquet('r2://{r2_bucket()}/metadata/outcome_tokens.parquet')"
         return set(con.execute(q).df().iloc[:, 0].astype(str))

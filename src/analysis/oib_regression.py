@@ -183,8 +183,7 @@ def build_panel(con) -> pd.DataFrame:
     )
     df = df.fillna(0.0)
 
-    # Match fixed lifecycle-bin horizons rather than shifting to the next
-    # observed trade bin (which can skip arbitrary amounts of time).
+    # Horizons are fixed bin offsets. The next observed bin can be arbitrarily far ahead.
     for horizon in (1, 5, 10):
         future = mid[["market_id", "bin_id", "mid_yes", "abs_err"]].copy()
         future["bin_id"] = future["bin_id"] - horizon
@@ -266,18 +265,17 @@ def run_regressions(panel: pd.DataFrame, dbg) -> None:
     raw_oib = ["OIB_skilled", "OIB_lucky", "OIB_unlucky", "OIB_unskilled"]
     aligned_oib = ["AOIB_skilled", "AOIB_lucky", "AOIB_unlucky", "AOIB_unskilled"]
     models = [
-        # Paper Task 6.2: signed YES flow predicts subsequent signed price changes.
+        # Does signed YES flow predict later price changes?
         ("price_h1_raw_oib", "d_price_h1", raw_oib),
         ("price_h5_raw_oib", "d_price_h5", raw_oib),
         ("price_h10_raw_oib", "d_price_h10", raw_oib),
         ("terminal_gap_raw_oib", "terminal_gap", raw_oib),
         ("resolution_raw_oib", "yes_payout", [*raw_oib, "mid_yes"]),
-        # Outcome alignment is required before pooling absolute-error changes
-        # across YES- and NO-resolved markets.
+        # Error changes need outcome-aligned flow to pool YES- and NO-resolved markets.
         ("accuracy_h1_aligned_oib", "d_err_h1", aligned_oib),
         ("accuracy_h5_aligned_oib", "d_err_h5", aligned_oib),
         ("accuracy_h10_aligned_oib", "d_err_h10", aligned_oib),
-        # Paper Task 6.3: informed-minority volume share and lifecycle accuracy.
+        # Does a higher Skilled volume share reduce pricing error?
         ("accuracy_h1_skilled_share", "d_err_h1", ["volume_share_skilled"]),
         ("accuracy_h5_skilled_share", "d_err_h5", ["volume_share_skilled"]),
         ("accuracy_h10_skilled_share", "d_err_h10", ["volume_share_skilled"]),

@@ -39,7 +39,7 @@ def _winner_index(outcomes: list[Any], outcome_prices: list[Any]) -> int | None:
         return None
     if len(prices) != len(outcomes):
         return None
-    # Winner is typically price ~1 after resolution
+    # After resolution the winner's price is ~1.
     mx = max(prices)
     if mx < 0.5:  # not resolved / ambiguous
         return None
@@ -61,7 +61,7 @@ def _extract_tokens_and_labels(market: dict[str, Any]) -> tuple[list[str], list[
     if not isinstance(outcomes, list):
         outcomes = []
 
-    # Normalize token ids to string (match on-chain string form)
+    # String ids match the on-chain form.
     token_ids = [str(t).strip() for t in raw_ids if str(t).strip()]
     labels = [str(o) for o in outcomes]
     return token_ids, labels
@@ -97,10 +97,10 @@ def fetch_keyset_pages(
     items_key: str,
     max_pages: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
-    """Follow Gamma keyset pages (``after_cursor``); each page is checkpointed and reused.
+    """Follow Gamma keyset pages (``after_cursor``), saving each page to ``store``.
 
-    The cursor chain is resumable: page N is stored under a key derived from the query and
-    the cursor that produced it, so a crashed run re-reads saved pages without new requests.
+    Each page is keyed by the query and the cursor that produced it, so a rerun reads
+    saved pages instead of refetching them.
     """
     base_params = list(params.items()) if isinstance(params, dict) else list(params)
     rows: list[dict[str, Any]] = []
@@ -203,18 +203,16 @@ def build_tables(
             if win_idx is None and len(token_ids) == 2 and len(prices) == 2:
                 win_idx = _winner_index(["a", "b"], prices)
 
-            # Skip markets we cannot resolve
             if win_idx is None or len(token_ids) < 2:
                 continue
             if len(token_ids) != len(labels) and len(labels) >= 2:
-                # Align lengths: sometimes more labels than tokens
+                # Drop token ids that have no label.
                 token_ids = token_ids[: len(labels)]
             if len(token_ids) < 2:
                 continue
 
             yes_token_id = str(token_ids[0])  # Polymarket convention: index 0 = Yes for binary
             if len(labels) >= 2 and str(labels[0]).lower() != "yes":
-                # try find Yes index
                 for i, lab in enumerate(labels):
                     if str(lab).lower() == "yes":
                         yes_token_id = str(token_ids[i])
@@ -268,10 +266,10 @@ def _category_from_tags(tags: Any) -> str:
 def build_tables_from_markets(
     raw_markets: list[dict[str, Any]],
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Stage 2 tables from Gamma market objects (open markets kept with NULL payouts).
+    """Period-scoped metadata tables from Gamma market objects. Open markets keep NULL payouts.
 
-    A market counts as resolved only when it is closed and one outcome price is ~1;
-    open-market prices are beliefs, not payouts, so they are never mapped to a winner.
+    Only closed markets get payouts. Open-market prices are beliefs, not payouts, so they
+    are never mapped to a winner.
     """
     events: dict[str, dict[str, Any]] = {}
     markets_rows: list[dict[str, Any]] = []
@@ -381,13 +379,11 @@ def main() -> None:
             dbg.assertion("empty_universe", "red", "No markets after filter — check Gamma API params")
             raise SystemExit("No markets to export")
 
-        # Category histogram
         cat_hist = events_df["category"].value_counts().head(20)
         ch = cat_hist.reset_index()
         ch.columns = ["category", "count"]
         dbg.save_diagnostic_df("category_histogram", ch)
 
-        # Markets per event
         mpe = markets_df.groupby("event_id").size().reset_index(name="n_markets")
         dbg.save_diagnostic_df("markets_per_event", mpe)
         med = float(mpe["n_markets"].median())
@@ -397,7 +393,6 @@ def main() -> None:
         else:
             dbg.assertion("cluster_size", "green", f"Median markets per event = {med}")
 
-        # Payout sums per market
         ps = tokens_df.groupby("market_id")["resolved_payout"].sum().reset_index()
         bad = ps[(ps["resolved_payout"] < 0.99) | (ps["resolved_payout"] > 1.01)]
         dbg.log("quality", "markets_payout_sum_not_1", len(bad))
@@ -414,12 +409,10 @@ def main() -> None:
         else:
             dbg.assertion("unique_tokens", "green", "No duplicate token_ids")
 
-        # Top events by volume
         vol = markets_df.groupby("event_id")["volume"].sum().sort_values(ascending=False).head(20)
         top_ev = vol.reset_index().merge(events_df, on="event_id", how="left")
         dbg.save_diagnostic_df("top_20_events_by_volume", top_ev)
 
-        # Sample events JSON
         sample = random.sample(list(events_df.to_dict("records")), min(5, len(events_df)))
         dbg.save_diagnostic_json("sample_events", sample)
 

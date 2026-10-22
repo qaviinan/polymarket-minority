@@ -1,7 +1,7 @@
-"""Stage 2: compare the recent period to Stage 1 and measure 2024-wallet survival.
+"""Compare a recent period with Oct-Nov 2024 and check which 2024 Skilled wallets still trade.
 
-Reads 2024 FDR labels from the Stage 1 log tree (never period-scoped) and the current
-``PERIOD_ID`` labels from ``logs/periods/<id>/``.
+Reads the 2024 FDR labels from the top-level ``logs/`` tree (override with
+``STAGE2_2024_LABELS``) and the current ``PERIOD_ID`` labels from ``logs/periods/<id>/``.
 """
 
 from __future__ import annotations

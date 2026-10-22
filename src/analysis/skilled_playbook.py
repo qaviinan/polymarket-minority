@@ -1,7 +1,7 @@
-"""Where does Skilled PnL come from? Decompose taker PnL into plays.
+"""Decompose taker PnL into plays to see where Skilled PnL comes from.
 
-Every taker fill is put on a "long the chosen outcome" footing: a BUY at price p backs that
-token at p; a SELL at p backs the complementary outcome at 1 - p. Fills are then bucketed by
+Each taker fill is treated as a long position in the outcome it backs. A BUY at price p backs
+that token at p. A SELL at p backs the complementary outcome at 1 - p. Fills are bucketed by
 
   * effective price band   (near-certain >=95c, strong favorite 80-95c, favorite 50-80c,
                             underdog 20-50c, longshot <20c)
@@ -9,8 +9,8 @@ token at p; a SELL at p backs the complementary outcome at 1 - p. Fills are then
                             1-7 days, >7 days)
   * theme                  (skilled_profile.classify_theme)
 
-and each account gets a dominant play = band with the largest share of its positive PnL.
-Uses the restricted-universe fills cache built by skilled_profile (same PnL as Stage 1).
+An account's dominant play is the band with the largest share of its positive PnL.
+Reads the restricted-universe fills cache built by skilled_profile (same PnL as the 2024 run).
 
 Run: python -m src.analysis.skilled_playbook
 """

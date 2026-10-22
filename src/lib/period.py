@@ -1,7 +1,7 @@
 """Period scoping for R2 prefixes and local checkpoints.
 
-``PERIOD_ID`` unset keeps the Stage 1 layout (``metadata/``, ``order_filled/``) so 2024
-artifacts are never overwritten. Any other period lives under ``periods/<PERIOD_ID>/``.
+With ``PERIOD_ID`` unset, keys use the 2024 layout (``metadata/``, ``order_filled/``),
+so 2024 artifacts are never overwritten. Any other period lives under ``periods/<PERIOD_ID>/``.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def local_dir(*parts: str) -> Path:
 
 
 def logs_dir() -> Path:
-    """JSONL + diagnostic root. Period-scoped so Stage 2 never overwrites Stage 1 logs."""
+    """Root for JSONL logs and diagnostics. Period-scoped so later periods never overwrite 2024 logs."""
     pid = period_id()
     path = Path("logs") / "periods" / pid if pid else Path("logs")
     path.mkdir(parents=True, exist_ok=True)

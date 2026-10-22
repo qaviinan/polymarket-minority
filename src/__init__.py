@@ -1,1 +1,1 @@
-"""Replication package (Stage 1)."""
+"""Replication package."""

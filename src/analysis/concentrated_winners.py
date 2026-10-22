@@ -1,24 +1,23 @@
 """Concentrated winners: few-bet, single-category accounts that made large profits.
 
-Separate from the Stage 1 pipeline. Stage 1 requires n_trades >= 10 and K >= 5 events, which
-by construction excludes "few key bets" accounts. This module studies them directly on the
-**full** market universe, scoring each in-window position at its final resolution payout
-(markets that resolved after the fill cutoff, including the 2024 US election, are included).
+The main skill test needs n_trades >= 10 and K >= 5 events, which excludes these accounts
+by construction. This module scores them on the full market universe, valuing each
+in-window position at its final payout (markets resolved after the fill cutoff, including
+the 2024 US election, are included).
 
-PnL definition (per account x outcome token, taker + maker fills in the analysis window):
+PnL per account and outcome token (taker and maker fills in the window):
     pnl = (buy_shares - sell_shares) * payout - (buy_usdc - sell_usdc) - fees
-Sells of inventory acquired before the window are scored as if the account had held to
-resolution instead (decision PnL), so uncovered sellers can show negative PnL.
+Sells of inventory bought before the window are scored against holding to resolution,
+so uncovered sellers can show negative PnL.
 
 Selection (env-overridable):
-    CONC_MAX_EVENTS (3)      at most this many distinct events traded
-    CONC_MAX_FILLS (50)      at most this many fills
-    CONC_MIN_THEME_SHARE (0.9)  >= this share of volume in one theme ("within-category")
-    CONC_MIN_PNL (1000)      at least this much resolution PnL
+    CONC_MAX_EVENTS (3)         at most this many distinct events
+    CONC_MAX_FILLS (50)         at most this many fills
+    CONC_MIN_THEME_SHARE (0.9)  at least this share of volume in one theme
+    CONC_MIN_PNL (1000)         at least this much resolution PnL
 
-Skill evidence: a price-calibrated null (each net token position pays 1 with probability
-equal to its average entry price) is computed for every account in the few-bet,
-within-category population, so the test is not conditioned on having won.
+The price-calibrated null runs on every few-bet, single-category account, not only the
+winners, so the test is not conditioned on having won.
 
 Run: python -m src.analysis.concentrated_winners   (CONC_REFRESH=1 re-pulls from R2)
 """
@@ -186,12 +185,11 @@ def markouts(fills: pd.DataFrame, hours: pd.DataFrame, horizons=(1, 6, 24, 72)) 
 
 
 def timing_excess(fills: pd.DataFrame, hours: pd.DataFrame, horizons=(1, 6, 24, 72)) -> pd.DataFrame:
-    """Drift after each fill minus the average drift seen by same-side taker flow in that token.
+    """Drift after each fill minus the mean drift of same-side taker flow in that token.
 
-    drift_h = dir * (VWAP(hour+h) - VWAP(hour)). The benchmark for a BUY is the taker-buy-share
-    weighted mean drift over the token's whole life; for a SELL, the taker-sell weighted mean.
-    Because both terms condition on the same token (and hence the same eventual outcome),
-    a positive excess means the fills were *timed* ahead of repricing, not merely on the winner.
+    drift_h = dir * (VWAP(hour+h) - VWAP(hour)). The BUY benchmark weights each hour of the
+    token's life by taker buy shares, the SELL benchmark by taker sell shares. Both terms
+    share the token's outcome, so a positive excess means good timing, not just a winning side.
     """
     look = _vwap_lookup(hours)
     f = fills.copy()
@@ -301,11 +299,10 @@ def clusters(fills: pd.DataFrame, users: set, window_s: int = 60, min_cotimed: i
 
 
 def watchlist(sel: pd.DataFrame, mo: pd.DataFrame, positions: pd.DataFrame) -> pd.DataFrame:
-    """Rank non-election concentrated winners on outcome-independent evidence.
+    """Rank non-election concentrated winners on timing, entry price and calibrated p.
 
-    Features: share-weighted 6h/24h timing excess (entry ahead of repricing), share-weighted
-    entry price of net-long positions (cheap = more surprising), calibrated p, and size.
-    score = rank(excess_24h) + rank(-entry) + rank(-p_calibrated), higher is stronger.
+    score = rank(excess_24h) + rank(-avg_buy_price) + rank(-p_calibrated), as percentile
+    ranks with missing values at 0.5. Higher is stronger.
     """
     ne = sel[sel["top_theme"] != "US election outcome"].copy()
     m = mo[mo["user_id"].isin(ne["user_id"])]
@@ -358,10 +355,9 @@ def account_table(p: pd.DataFrame) -> pd.DataFrame:
 def calibrated_null(p: pd.DataFrame, users: pd.Index, n_iter: int, seed: int) -> pd.DataFrame:
     """Per-account p-value of resolution PnL under price-calibrated outcomes.
 
-    Each (account, market) net long position in one token is simulated: the token pays 1 with
-    probability equal to the account's average entry price for that token, clipped to
-    [0.005, 0.995]. Sell-only tokens use the average sell price. Outcomes of tokens in the same
-    market are simulated jointly via the YES token (NO pays 1 - YES).
+    Each (account, market) gets one draw. YES pays 1 with probability equal to the account's
+    average entry price, read as a YES price and clipped to [0.005, 0.995]; NO pays the
+    complement. Sell-only tokens use the average sell price.
     """
     rng = np.random.default_rng(seed)
     q = p[p["user_id"].isin(users)].copy()

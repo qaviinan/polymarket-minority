@@ -41,7 +41,7 @@ def r2_uri(*parts: str) -> str:
     """Build r2://bucket/key segments (no leading slash on key).
 
     When ``PERIOD_ID`` is set, keys are placed under ``periods/<id>/`` unless ``parts``
-    already start with ``periods`` (Stage 2 ingest uses ``period_key`` explicitly).
+    already start with ``periods`` (as keys from ``period_key`` do).
     ``LOCAL_R2_MIRROR`` rewrites keys to a local directory (after stripping ``periods/<id>/``).
     """
     from src.lib.period import period_id
@@ -80,7 +80,6 @@ def get_duck() -> "duckdb.DuckDBPyConnection":
     key_id = require_env("R2_ACCESS_KEY_ID")
     secret = require_env("R2_SECRET_ACCESS_KEY")
     region = os.environ.get("R2_REGION", "auto")
-    # Drop existing secret if re-running in same process
     try:
         con.execute("DROP SECRET IF EXISTS r2_secret;")
     except Exception:

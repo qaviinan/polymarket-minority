@@ -15,7 +15,7 @@ _SECONDS_PER_WEEK = 604800
 
 
 def week_index_for_ts(ts: int, anchor_ts: int) -> int:
-    """Exact, unclamped week bucket used by the SQL views."""
+    """Week bucket for a timestamp, same formula as the SQL views (floored at 0, no upper cap)."""
     return max(0, (int(ts) - int(anchor_ts)) // _SECONDS_PER_WEEK)
 
 

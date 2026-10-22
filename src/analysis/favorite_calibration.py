@@ -1,16 +1,16 @@
-"""Strategy v1 validation step 1: is buying favorites profitable, and if not, how did Skilled win?
+"""Is buying favorites profitable, and if not, how did Skilled accounts win?
 
-Every taker fill is restated as "bought token X at effective price q" (a SELL at p backs the
-complement at 1-p), then calibrated against the realized payout. Three questions:
+Each taker fill is restated as "bought token X at effective price q" (a SELL at p backs the
+complement at 1-p) and compared with the realized payout. Three questions:
 
 1. Calibration: do q>=0.90 fills win more often than q, after fees, by bucket and horizon?
-2. Strategy test: buying the favorite in every resolved market at a fixed horizon before resolution.
-3. Selection: how much of each label group's favorite PnL is explained by *where* it bought
-   (price, time to resolution, theme, live) versus residual pick-skill, using leave-group-out
-   benchmarks; and whether the Skilled label itself selects on outcome.
+2. Strategy: buy the favorite in every resolved market at a fixed time before resolution.
+3. Selection: how much of each group's favorite PnL comes from where it bought (price, time
+   to resolution, theme, live) versus picking, using leave-group-out benchmarks; and
+   whether the Skilled label itself selects on outcome.
 
-Confidence intervals resample whole events (Poisson bootstrap) because outcomes within an event
-are mutually exclusive or strongly correlated.
+Confidence intervals resample whole events (Poisson bootstrap), since outcomes within an
+event are mutually exclusive or strongly correlated.
 """
 
 from __future__ import annotations
@@ -169,7 +169,7 @@ def calibration_table(f: pd.DataFrame, by: list[str]) -> pd.DataFrame:
     agg["roi_2026_fee"] = agg["pnl_2026"] / agg["cost"]
     ci = _boot_ratio(f, by, "pnl", "cost").rename(columns={"ci_lo": "roi_ci_lo", "ci_hi": "roi_ci_hi"})
     agg = agg.merge(ci.drop(columns=["pnl_ratio"]), on=by, how="left")
-    # each market votes once per cell: share-weighted win minus q within the market, averaged
+    # Equal weight per market: share-weighted (win - q) within each market, then averaged.
     mk = f.groupby(by + ["market_id"], observed=True)[["sh_won", "sh_q", "amount_shares"]].sum()
     mk = (mk["sh_won"] - mk["sh_q"]) / mk["amount_shares"]
     agg = agg.merge(
@@ -212,7 +212,7 @@ def horizon_strategy(f: pd.DataFrame, horizons_h=(1, 6, 24, 72, 168)) -> pd.Data
 
 
 def _cell_roi(f: pd.DataFrame, keys: list[str], exclude: pd.Series) -> pd.Series:
-    """Leave-group-out ROI per cell, falling back to coarser cells when the cell is empty."""
+    """Leave-group-out ROI per cell (fills outside `exclude`)."""
     base = f[~exclude]
     c = base.groupby(keys, observed=True)[["pnl", "cost"]].sum()
     return (c["pnl"] / c["cost"]).rename("cell_roi")
@@ -330,7 +330,7 @@ def main() -> None:
     spec = favorite_specialists(f)
     spec_sum = specialist_summary(spec)
 
-    # Skilled favorite PnL concentration: share from top markets
+    # How concentrated is Skilled favorite PnL across markets?
     sk = f[(f["group"] == "Skilled_Winner") & (f["q"] >= FAV)]
     by_m = sk.groupby(["market_id", "question"])["pnl"].sum().sort_values(ascending=False)
     summary["skilled_fav_pnl"] = float(by_m.sum())

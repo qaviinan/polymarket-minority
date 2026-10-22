@@ -1,6 +1,6 @@
-"""Stage 2 helpers for already-ingested fills: Gamma metadata, R2 publishing, RPC spot checks.
+"""Helpers for the 2026 period's fills: Gamma metadata, R2 publishing, RPC spot checks.
 
-Fill ingest itself is not done here. Fills come from existing R2 slices or the HuggingFace
+This module does not ingest fills. They come from existing R2 slices or the Hugging Face
 Polymarket_data release (see ``scripts/validate_hf_sample.py``).
 """
 
@@ -58,9 +58,9 @@ def decode_order_filled_token_id(log: dict[str, Any]) -> str:
 def fetch_events_windowed(
     client, params: dict[str, Any], store: PageStore, lo_ts: int, hi_ts: int, *, min_span_s: int = 900
 ) -> tuple[list[dict], dict[str, int]]:
-    """Keyset events with end dates in [lo_ts, hi_ts); halves the window on persistent edge blocks.
+    """Keyset events ending in [lo_ts, hi_ts). Halves the window on persistent edge blocks.
 
-    Some keyset cursors deterministically trip Gamma's CDN WAF; narrower windows yield new cursors.
+    Some keyset cursors always trip Gamma's CDN firewall. A narrower window gives new cursors.
     """
     q = {**params, "end_date_min": _iso(lo_ts), "end_date_max": _iso(hi_ts - 1)}
     try:
@@ -120,10 +120,11 @@ def _token_ids(market: dict[str, Any]) -> list[str]:
 def fetch_tag_window_tokens(
     start_ts: int, end_ts: int, tags: list[str], lookahead_days: int, min_volume: float
 ) -> tuple[dict[str, float], dict[str, Any]]:
-    """token -> market volume for markets (volume >= ``min_volume``) in ``tags`` events ending in [start-1h, end+lookahead].
+    """Map token to market volume for ``tags`` events ending in [start - 1h, end + lookahead].
 
-    Pages are keyed by (tag, closed, UTC end-date day) so neighbouring slices reuse them.
-    Gamma end dates trail the real game (tennis: ~7 days), hence the multi-day lookahead.
+    Markets below ``min_volume`` are skipped. Pages are keyed by (tag, closed, UTC end-date day)
+    so neighbouring slices reuse them. Gamma end dates trail the real game (tennis: ~7 days),
+    hence the multi-day lookahead.
     """
     base = os.environ.get("POLYMARKET_GAMMA_BASE_URL", "https://gamma-api.polymarket.com")
     store = PageStore(local_dir("gamma", "tag_events_by_day"))

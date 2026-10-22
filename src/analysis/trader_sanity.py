@@ -1,4 +1,4 @@
-"""Stage 1.6: inspect top winners, concentrated whales, and Skilled trade histories."""
+"""Inspect top winners, concentrated whales, and Skilled trade histories."""
 
 from __future__ import annotations
 

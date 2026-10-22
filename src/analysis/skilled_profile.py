@@ -1,8 +1,8 @@
-"""Descriptive profile of Skilled accounts versus other groups (Stage 1 FDR labels).
+"""Profile of Skilled accounts versus the other label groups (FDR labels).
 
-Covers market themes, trade direction, volume/PnL, price buckets, sell inventory,
-category concentration, cross-account agreement on shared markets/events, and a
-top-10 versus rest comparison. Restricted to markets resolved by the fill cutoff.
+Covers themes, trade direction, volume and PnL, price buckets, sell inventory,
+concentration, cross-account agreement, and the top N versus the rest. Only
+markets resolved by the fill cutoff are used.
 """
 
 from __future__ import annotations
@@ -386,7 +386,7 @@ def _co_timing(con, f: pd.DataFrame, users: list[str], window_s: int) -> pd.Data
 
 
 def _consensus(f: pd.DataFrame) -> pd.DataFrame:
-    """Per group: does the group's net YES flow in each market point at the outcome?"""
+    """Per group: does its net YES flow in each market point at the outcome?"""
     t = f[f["order_type"].eq("taker")]
     gm = t.groupby(["group", "market_id"]).agg(
         net_yes=("yes_dir_usdc", "sum"), vol=("amount_usdc", "sum"), n_users=("user_id", "nunique")
@@ -421,8 +421,8 @@ def _calibrated_null(
 ) -> pd.DataFrame:
     """Price-calibrated null: a token pays 1 with probability equal to its entry price.
 
-    Tokens in the same market are one draw: YES wins with the YES entry price and NO
-    wins when YES does not. Positions without a market id stay independent.
+    Tokens in the same market share one draw (NO wins when YES loses). Positions
+    without a market id are drawn independently.
     """
     t = f[f["order_type"].eq("taker") & f["user_id"].isin(users)]
     agg = {

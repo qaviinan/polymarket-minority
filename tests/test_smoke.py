@@ -1,4 +1,4 @@
-"""Smoke tests: imports with dummy env (no R2 network required for import)."""
+"""Import smoke test with dummy R2 credentials (no network)."""
 
 from __future__ import annotations
 

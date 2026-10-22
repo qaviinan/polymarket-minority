@@ -1,4 +1,4 @@
-"""Run event-split persistence over multiple seeds and aggregate robustness metrics."""
+"""Run event-split persistence over several seeds and summarize the metrics across seeds."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Polygon JSON-RPC helpers: endpoint failover and block <-> timestamp lookups."""
+"""Polygon JSON-RPC helpers: endpoint failover and block/timestamp lookups."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 from src.lib.http import JsonRpc
 
-# Public Polygon RPCs (no API key). Tried after POLYGON_RPC_URL / POLYGON_RPC_FALLBACK_URLS if those fail.
+# Public Polygon RPCs (no API key). Tried after POLYGON_RPC_URL and POLYGON_RPC_FALLBACK_URLS.
 _DEFAULT_POLYGON_RPC_FALLBACKS = (
     "https://polygon-bor.publicnode.com",
     "https://1rpc.io/matic",

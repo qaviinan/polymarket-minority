@@ -1,4 +1,4 @@
-"""Map market_id → event_id and YES token id using metadata Parquet on R2."""
+"""Map market_id to event_id and YES token id using metadata Parquet on R2."""
 
 from __future__ import annotations
 
@@ -42,8 +42,8 @@ DROP_THEMES = {"Sports & esports", "Weather & science"}
 def apply_recent_universe_filters(con: duckdb.DuckDBPyConnection) -> None:
     """Drop Exchange-v3 combos and sports/esports/weather fills for a PERIOD_ID run.
 
-    Ingest already tries to exclude tagged tokens, but leakage is
-    expected; analysis re-filters from metadata. Combos have no Gamma catalog row.
+    Ingest already tries to exclude tagged tokens, but some get through, so analysis
+    filters again from metadata. Combos have no Gamma catalog row.
     """
     import os
 
@@ -107,8 +107,8 @@ def resolved_by_cutoff_sql(market_alias: str, cutoff_sql: str) -> str:
 
     Gamma market end dates can precede the real resolution (the Harris 2024 winner market
     lists 2024-11-04 12:00Z while its event ends 2024-11-05), so the event end is required too.
-    A market cached before it closed has NULL ``resolved_payout``; those fills must not
-    enter the resolved universe, because NULL pnl becomes a NaN sign-test and a fake p of 0.
+    A market cached before it closed has NULL ``resolved_payout``. Its fills stay out of the
+    resolved universe, because NULL pnl becomes a NaN sign test and a false p of 0.
     """
     return (
         f"{market_alias}.market_id IN ("

@@ -1,4 +1,4 @@
-"""Offline tests for the HuggingFace fill transform."""
+"""Offline tests for the Hugging Face fill transform."""
 
 from __future__ import annotations
 

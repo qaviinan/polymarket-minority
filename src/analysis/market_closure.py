@@ -1,4 +1,4 @@
-"""Stage 1.5: maker/taker settlement accounting and zero-sum closure."""
+"""Maker/taker settlement accounting and zero-sum closure."""
 
 from __future__ import annotations
 

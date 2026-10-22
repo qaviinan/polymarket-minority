@@ -2,11 +2,11 @@
 
 ## Data
 
-- **2024:** Polymarket `OrderFilled` events on Polygon, stored in Cloudflare R2 as Parquet. The analysis window is Oct 5 – Nov 4, 2024.
-- **2026:** the [SII-WANGZJ/Polymarket_data](https://huggingface.co/datasets/SII-WANGZJ/Polymarket_data) release on Hugging Face, Aug 10 – Oct 4, 2026 (`src/data/hf_fills.py`). `scripts/validate_hf_sample.py` compares it row by row with the on-chain fills over a window covered by both.
-- **Metadata:** markets, events and payouts come from the Gamma API (`src/data/load_markets.py`).
+- 2024: Polymarket `OrderFilled` events on Polygon, stored in Cloudflare R2 as Parquet. The analysis window is Oct 5 – Nov 4, 2024.
+- 2026: the [SII-WANGZJ/Polymarket_data](https://huggingface.co/datasets/SII-WANGZJ/Polymarket_data) release on Hugging Face, Aug 10 – Oct 4, 2026 (`src/data/hf_fills.py`). `scripts/validate_hf_sample.py` compares it row by row with the on-chain fills over a window covered by both.
+- Metadata: markets, events and payouts come from the Gamma API (`src/data/load_markets.py`).
 
-PnL is scored only on markets whose market *and* parent event ended before the last fill. Otherwise open positions, above all the 2024 presidential market, get scored before the result is known.
+PnL is scored only on markets where both the market and its parent event ended before the last fill. Otherwise open positions, above all the 2024 presidential market, would be scored before the result is known.
 
 ## Pipeline
 
@@ -26,13 +26,13 @@ PnL is scored only on markets whose market *and* parent event ended before the l
 
 ## Skill test
 
-For each taker, PnL is summed by event (an event groups related markets, such as all candidates in one race). Under the null of no skill, each event's direction is flipped with probability ½; fees are paid either way. The p-value is the share of flips that do at least as well as the real PnL. With 12 or fewer events every sign vector is enumerated; above that, 10,000 seeded draws with p = (1 + exceedances) / (1 + draws).
+For each taker, PnL is summed by event (an event groups related markets, such as all candidates in one race). Under the null of no skill, each event's sign is flipped with probability ½, and fees are paid either way. The p-value is the share of flips that do at least as well as the real PnL. With 12 or fewer events every sign vector is enumerated. Above that, I use 10,000 seeded draws with p = (1 + exceedances) / (1 + draws).
 
 A wallet is eligible with at least 10 trades and 5 events, since with K events the smallest possible p-value is 2⁻ᴷ. Winners with p < 0.05 are Skilled, other winners Lucky; losers split into Unskilled and Unlucky the same way. Benjamini–Hochberg at q = 0.05 is applied across eligible wallets.
 
 ## Price-calibrated null
 
-The sign test treats a 95¢ win and a 5¢ loss as equally likely. Twelve straight wins at 95¢ give p = 2⁻¹² under the sign test, but happen 54% of the time by chance. The calibrated null pays each position 1 with probability equal to its entry price, so expected PnL is zero. Each wallet gets 5,000 draws, refined to 200,000 when p < 0.01.
+The sign test treats a win and a loss on a 95¢ contract as equally likely. Twelve straight wins at 95¢ give p = 2⁻¹² under the sign test, but happen 54% of the time if prices are fair. The calibrated null pays each position 1 with probability equal to its entry price, so expected PnL is zero. Each wallet gets 5,000 draws, refined to 200,000 when p < 0.01.
 
 | Group (eligible) | Wallets | Calibrated p < 0.05 | Survive BH |
 |---|---:|---:|---:|
@@ -51,7 +51,7 @@ Events are split 80/20 at random and wallets are labelled on each half separatel
 
 ## Price discovery
 
-Each market's life is split into bins. Order imbalance by group is regressed on the next bin's change in price and in absolute pricing error, with market and bin fixed effects and standard errors clustered by market. Labels come from the first three weeks; flow is measured in the fourth.
+Each market's life is split into bins. The next bin's change in price and in absolute pricing error are regressed on each group's order imbalance (OIB), with market and bin fixed effects and standard errors clustered by market. Labels come from the first three weeks; flow is measured in the fourth.
 
 | Regression | Skilled β | p | Lucky β | Unlucky β | Unskilled β |
 |---|---:|---:|---:|---:|---:|
@@ -61,7 +61,7 @@ Each market's life is split into bins. Order imbalance by group is regressed on 
 | `d_price_h1 ~ OIB` | −0.0190 | 0.175 | −0.0053 | −0.0153 | −0.0082 |
 | `yes_payout ~ mid + OIB` | +0.0261 | 0.401 | −0.0146 | −0.0384 | +0.0240 |
 
-The signs are the same for every group, which points to bid–ask bounce: without quote data, prices here are execution VWAPs, and buys print near the ask.
+In the pricing-error and price-change rows the signs are the same for every group, which points to bid–ask bounce. Without quote data, prices here are execution VWAPs, and buys print near the ask.
 
 ## Running it
 

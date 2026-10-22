@@ -1,4 +1,4 @@
-"""Stage 1.2: identity, farming, bot, residual-position, and market-structure diagnostics."""
+"""Identity, farming, bot, residual-position, and market-structure diagnostics."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Copy the active PERIOD_ID's R2 fills + metadata to a local mirror (no Goldsky)."""
+"""Copy the active PERIOD_ID's metadata and resolved-market fills from R2 to a local mirror."""
 
 from __future__ import annotations
 

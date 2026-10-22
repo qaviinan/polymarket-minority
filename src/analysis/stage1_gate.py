@@ -1,4 +1,4 @@
-"""Aggregate Stage 1 audits into explicit gates and a reproducible rigor memo."""
+"""Collect the audit step logs into pass/fail checks, a JSON summary and a markdown memo."""
 
 from __future__ import annotations
 
@@ -71,10 +71,10 @@ def main() -> None:
 
         checks = {
             "daily_continuity": _ok("verify_ingest", "daily_continuity"),
-            # Combos have no Gamma row; Stage 2 analysis inner-joins tokens and drops them.
+            # Combo markets have no Gamma row. The 2026 analysis inner-joins tokens, which drops them.
             "metadata_join": _ok("verify_ingest", "metadata_join", allow_yellow=bool(pid)),
             "unique_fill_ids": _ok("verify_ingest", "unique_fill_ids"),
-            # 13.5 days cannot support the 3w/1w calendar split.
+            # A 13.5-day period is too short for the 3-week/1-week split.
             "exact_test_week": (
                 True
                 if pid and not minority_train_test_split_enabled()

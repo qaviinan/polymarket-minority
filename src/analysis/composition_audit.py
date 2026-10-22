@@ -1,4 +1,4 @@
-"""Stage 1.5: category, event, and PnL concentration of the primary labels."""
+"""Category, event, and PnL concentration of the primary labels."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Stage 1.1: quantify truncation and compare unrestricted vs cutoff-valid labels."""
+"""Quantify truncation at the fill cutoff and compare unrestricted vs cutoff-valid labels."""
 
 from __future__ import annotations
 

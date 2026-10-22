@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Stage 2 analysis on already-verified R2 slices. Does not call Goldsky/turbo.
+# Analysis for the 2026 period on already-verified R2 slices.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
@@ -16,7 +16,7 @@ export MINORITY_LABEL_SPLIT=""
 export ANALYSIS_USE_LAST_N_DAYS=""
 export ANALYSIS_BLOCK_TS_MIN=""
 export ANALYSIS_BLOCK_TS_MAX=""
-# Materialize after publish; then point DuckDB at the local mirror (no Goldsky).
+# Materialize after publish, then point DuckDB at the local mirror.
 export LOCAL_R2_MIRROR_DEST="data/periods/recent_2026/r2_mirror"
 
 mkdir -p logs/periods/recent_2026

@@ -1,5 +1,5 @@
 #!/bin/bash
-# One HuggingFace fill week per process. Exit 2 means the week is on R2; exit 0 means
+# One Hugging Face fill week per process. Exit 2 means the week is on R2; exit 0 means
 # the backfill has reached 2024-10-01. Any other exit is retried, and a restarted
 # process resumes the unfinished week from data/periods/recent_2026/hf_load_manifest.json.
 cd "$(dirname "$0")/.." || exit 1

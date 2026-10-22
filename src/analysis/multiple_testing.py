@@ -1,4 +1,4 @@
-"""Stage 1.4: discreteness-aware eligible cohort, FDR, and Gate A statistics."""
+"""Discreteness-aware eligible cohort, FDR, and the excess-over-chance statistics."""
 
 from __future__ import annotations
 

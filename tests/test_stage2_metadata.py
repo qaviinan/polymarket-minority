@@ -1,4 +1,4 @@
-"""Offline tests for Stage 2 metadata/HTTP hygiene (no network, no R2)."""
+"""Offline tests for Gamma metadata, checkpoints and the HTTP client (no network, no R2)."""
 
 from __future__ import annotations
 

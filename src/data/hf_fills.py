@@ -1,12 +1,12 @@
-"""Stream HuggingFace ``orderfilled.parquet`` into R2 in the existing fill schema.
+"""Stream Hugging Face ``orderfilled.parquet`` into R2 in the existing fill schema.
 
 Reads one row group at a time (column-pruned, so ``order_hash`` is never downloaded),
 drops <=15-minute crypto Up/Down markets, and writes ZSTD parquet under
-``periods/<PERIOD_ID>/order_filled/dt=YYYY-MM-DD/hf_rgNNNNN.parquet``. Nothing is
-written to local disk except a small resume manifest.
+``periods/<PERIOD_ID>/order_filled/dt=YYYY-MM-DD/hf_w<block_lo>_rgNNNNN.parquet``.
+Only a small resume manifest is written to local disk.
 
 2026 HF timestamps match the chain. Earlier snapshots extrapolate them (off by
-minutes to hours); when a spot check disagrees with Polygon by more than 2 seconds,
+minutes to hours). When a spot check disagrees with Polygon by more than 2 seconds,
 timestamps are rebuilt from block anchors every 1,000 blocks.
 
     PERIOD_ID=recent_2026 python -m src.data.hf_fills
@@ -107,7 +107,7 @@ def row_groups_overlapping(stats: list[tuple[int, int, int]], lo: int, hi: int) 
 
 
 def interpolate_timestamps(blocks: np.ndarray, anchors: np.ndarray, anchor_ts: np.ndarray) -> np.ndarray:
-    """Linear block→timestamp map. Anchors must be sorted and cover ``blocks``."""
+    """Linear block-to-timestamp map. Anchors must be sorted and cover ``blocks``."""
     return np.rint(np.interp(blocks.astype(np.float64), anchors.astype(np.float64), anchor_ts.astype(np.float64))).astype(
         np.int64
     )
@@ -260,7 +260,7 @@ def _block_stats(pf: pq.ParquetFile) -> list[tuple[int, int, int]]:
     return out
 
 
-# Backfill walks backward until this instant. Stage 1 already covers from here.
+# Backfill walks backward until this instant, the start of the 2024 sample.
 STOP_TS = 1727740800  # 2024-10-01 00:00:00 UTC
 
 
@@ -374,7 +374,7 @@ def _delete_uri(uri: str) -> None:
 
 
 def _write_days(con, table: pa.Table, rg: int, block_lo: int) -> int:
-    """Write one file per day. Returns the number of files. A crash before the manifest save redoes this group."""
+    """Write one file per day and return the file count. A crash before the manifest save redoes this group."""
     if len(table) == 0:
         return 0
     day_ids = table.column("dt").cast(pa.int32()).to_numpy(zero_copy_only=False)

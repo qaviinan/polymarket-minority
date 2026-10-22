@@ -1,4 +1,4 @@
-"""Stage 1.3: raw-fill negation, fee population, and counterfactual-size checks."""
+"""Raw-fill negation, fee population, and counterfactual-size checks."""
 
 from __future__ import annotations
 
